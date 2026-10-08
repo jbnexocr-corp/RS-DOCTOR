@@ -1,0 +1,34 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { socialLinks } from '@/data/social';
+import { formatPlaceholder } from '@/lib/placeholders';
+
+interface Props { locale: Locale; variant?: 'footer' | 'contact' }
+const { locale, variant = 'footer' } = Astro.props;
+const entries = Object.entries(socialLinks);
+const marks: Record<string, string> = { instagram: 'IG', tiktok: 'TT', whatsappChannel: 'WA', facebook: 'FB' };
+---
+
+<div class:list={['social-links', `social-links-${variant}`]} aria-label={locale === 'es' ? 'Redes sociales y contacto' : 'Social media and contact'}>
+  {entries.map(([key, item]) => (
+    <a
+      class:list={['social-link', { 'social-link-placeholder': item.placeholder }]}
+      href={item.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-social={key}
+      aria-label={item.placeholder
+        ? formatPlaceholder(`${item.label} — enlace temporal dirigido a Instagram`, locale)
+        : `${item.label} — Dr. Ronald Salazar`}
+    >
+      <span class="social-link-mark" aria-hidden="true">{marks[key]}</span>
+      <span>
+        <strong>{item.placeholder ? formatPlaceholder(item.label, locale) : item.label}</strong>
+        {variant === 'contact' && <small>{item.placeholder
+          ? formatPlaceholder(locale === 'es' ? 'Enlace temporal; canal oficial pendiente' : 'Temporary link; official channel pending', locale)
+          : item.handle}</small>}
+      </span>
+      <b aria-hidden="true">↗</b>
+    </a>
+  ))}
+</div>

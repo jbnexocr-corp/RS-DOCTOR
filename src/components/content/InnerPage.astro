@@ -1,0 +1,176 @@
+---
+import beigeImage from '@/assets/images/doctor-beige-arms-crossed.jpeg';
+import blueImage from '@/assets/images/doctor-blue-seated.jpeg';
+import scrubsImage from '@/assets/images/doctor-scrubs-portrait.jpeg';
+import type { InnerPageContent } from '@/data/innerPages';
+import type { Locale } from '@/lib/i18n';
+import { homeContent } from '@/data/home';
+import ResponsiveImage from '@/components/media/ResponsiveImage.astro';
+import SiteHeader from '@/components/navigation/SiteHeader.astro';
+import SiteFooter from '@/components/footer/SiteFooter.astro';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import ContactForm from '@/components/forms/ContactForm.astro';
+import { placeholderEnd, placeholderStart } from '@/lib/placeholders';
+import { serviceDetails } from '@/data/serviceDetails';
+import SocialLinks from '@/components/navigation/SocialLinks.astro';
+import ContactChannels from '@/components/contact/ContactChannels.astro';
+
+interface Props { locale: Locale; page: InnerPageContent; pathname: string }
+const { locale, page, pathname } = Astro.props;
+const shell = homeContent[locale];
+const images = { beige: beigeImage, blue: blueImage, scrubs: scrubsImage };
+const image = page.image === 'none' ? undefined : images[page.image];
+const imageAlt = locale === 'es'
+  ? `Dr. Ronald Salazar — ${page.title}`
+  : `Dr. Ronald Salazar — ${page.title}`;
+const reviewLabel = locale === 'es' ? 'Contenido provisional pendiente de revisión y aprobación' : 'Provisional content pending review and approval';
+const alternateHref = `/${locale === 'es' ? 'en' : 'es'}/${page.alternateSlug}/`;
+const pageServices = page.kind === 'pillar' ? serviceDetails[locale].filter((service) => service.pillarSlug === page.slug) : [];
+---
+
+<SiteHeader {locale} content={shell.nav} currentPath={pathname} {alternateHref} />
+<main id="main-content">
+  <div class="inner-breadcrumb-shell page-shell"><Breadcrumbs {locale} title={page.title} {pathname} /></div>
+  <header class:list={['inner-hero', { 'inner-hero-with-image': image }]}>
+    <div class="inner-hero-copy page-shell">
+      <p class="eyebrow">{page.eyebrow}</p>
+      <h1>{page.title}</h1>
+      <p>{page.intro}</p>
+      {page.pending && <span class="review-status">{placeholderStart(reviewLabel, locale)}</span>}
+    </div>
+    {image && (
+      <figure class="inner-hero-image">
+        <ResponsiveImage src={image} alt={imageAlt} widths={[480, 720, 960, 1280]} sizes="(min-width: 900px) 44vw, 100vw" loading="eager" fetchpriority="high" />
+      </figure>
+    )}
+  </header>
+
+  {page.sections.length > 0 && (
+    <section class="inner-sections section" aria-label={locale === 'es' ? 'Información principal' : 'Main information'}>
+      <div class="page-shell inner-section-grid">
+        {page.sections.map((section, index) => (
+          <article>
+            <span class="section-index">{String(index + 1).padStart(2, '0')}</span>
+            <h2>{section.title}</h2>
+            <p>{section.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {pageServices.length > 0 && (
+    <section class="pillar-service-directory section" aria-labelledby="service-directory-title">
+      <div class="page-shell">
+        <p class="eyebrow">{locale === 'es' ? 'Servicios del área' : 'Services in this area'}</p>
+        <h2 id="service-directory-title">{locale === 'es' ? 'Explora cada valoración y procedimiento' : 'Explore each evaluation and procedure'}</h2>
+        <div class="related-list">
+          {pageServices.map((service, index) => (
+            <a href={locale === 'es' ? `/es/servicios/${service.slug}/` : `/en/services/${service.slug}/`}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <div><h3>{service.title}</h3><p>{service.summary}</p></div>
+              <b aria-hidden="true">→</b>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {page.kind === 'contact' && (
+    <>
+      <section class="direct-contact-section section" aria-labelledby="direct-contact-title">
+        <div class="page-shell">
+          <ContactChannels {locale} />
+        </div>
+      </section>
+      <section class="social-contact-section section" aria-labelledby="social-contact-title">
+        <div class="page-shell social-contact-layout">
+          <div>
+            <p class="eyebrow">{locale === 'es' ? 'Comunidad y redes' : 'Community and social media'}</p>
+            <h2 id="social-contact-title">{locale === 'es' ? 'Sigue información del Dr. Ronald Salazar' : 'Follow Dr. Ronald Salazar'}</h2>
+            <p>{locale === 'es' ? 'El canal de WhatsApp, Instagram y TikTok son espacios para seguir contenido. Para solicitar una cita, utiliza el contacto directo del consultorio.' : 'The WhatsApp channel, Instagram, and TikTok are places to follow content. To request an appointment, use the office’s direct contact options.'}</p>
+          </div>
+          <SocialLinks {locale} variant="contact" />
+        </div>
+      </section>
+      <section class="contact-faq section" aria-labelledby="contact-faq-title">
+        <div class="page-shell contact-faq-layout">
+          <div>
+            <p class="eyebrow">{locale === 'es' ? 'Preguntas de contacto' : 'Contact questions'}</p>
+            <h2 id="contact-faq-title">{locale === 'es' ? 'Antes de escribir al consultorio' : 'Before contacting the office'}</h2>
+          </div>
+          <dl>
+            <div>
+              <dt>{locale === 'es' ? '¿Cómo solicito información para una cita?' : 'How do I request appointment information?'}</dt>
+              <dd>{locale === 'es' ? 'Escribe por WhatsApp o llama al +506 6429 7669. La clínica te responderá para confirmar disponibilidad y el siguiente paso.' : 'Send a WhatsApp message or call +506 6429 7669. The clinic will reply to confirm availability and the next step.'}</dd>
+            </div>
+            <div>
+              <dt>{locale === 'es' ? '¿Qué información debo enviar?' : 'What information should I send?'}</dt>
+              <dd>{locale === 'es' ? 'Comparte tu nombre y disponibilidad. Evita enviar diagnósticos, resultados o información médica sensible por un canal general.' : 'Share your name and availability. Avoid sending diagnoses, results, or sensitive medical information through a general contact channel.'}</dd>
+            </div>
+            <div>
+              <dt>{locale === 'es' ? '¿El mensaje confirma automáticamente la cita?' : 'Does the message automatically confirm the appointment?'}</dt>
+              <dd>{locale === 'es' ? 'No. El mensaje inicia la solicitud; el consultorio debe confirmar la fecha y disponibilidad.' : 'No. The message starts the request; the office must confirm the date and availability.'}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+      <section class="form-section section" aria-labelledby="form-title">
+        <div class="page-shell form-layout">
+          <div>
+            <p class="eyebrow">{locale === 'es' ? 'Alternativa futura' : 'Future alternative'}</p>
+            <h2 id="form-title">{locale === 'es' ? 'Formulario de contacto' : 'Contact form'}</h2>
+            <p>{locale === 'es' ? 'El formulario se conserva como alternativa, pero no recibirá datos hasta contar con privacidad aprobada y una conexión segura.' : 'The form is retained as an alternative, but it will not collect data until approved privacy terms and a secure connection are available.'}</p>
+          </div>
+          <ContactForm {locale} />
+        </div>
+      </section>
+    </>
+  )}
+
+  {page.kind === 'articles' && (
+    <section class="empty-library section">
+      <div class="page-shell">
+        <p class="eyebrow">{locale === 'es' ? 'Estado editorial' : 'Editorial status'}</p>
+        <h2>{locale === 'es' ? 'La biblioteca se publicará con revisión documentada.' : 'The library will be published with documented review.'}</h2>
+        <p>{locale === 'es' ? 'No mostramos artículos de relleno ni contenido médico sin responsable y fuentes.' : 'We do not display filler articles or medical content without an accountable reviewer and sources.'}</p>
+      </div>
+    </section>
+  )}
+
+  {page.related && page.related.length > 0 && (
+    <section class="related-section section" aria-labelledby="related-title">
+      <div class="page-shell">
+        <p class="eyebrow">{locale === 'es' ? 'Continuar explorando' : 'Continue exploring'}</p>
+        <h2 id="related-title">{locale === 'es' ? 'Información relacionada' : 'Related information'}</h2>
+        <div class="related-list">
+          {page.related.map((item, index) => (
+            <a href={item.href}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <div><h3>{item.title}</h3><p>{item.text}</p></div>
+              <b aria-hidden="true">→</b>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {page.pending && (
+    <aside class="pending-banner" aria-label={locale === 'es' ? 'Información pendiente' : 'Pending information'}>
+      <div class="page-shell"><strong>{placeholderEnd(locale === 'es' ? 'Contenido provisional' : 'Provisional content', locale)}</strong><p>{page.pending.toLocaleUpperCase(locale)}</p></div>
+    </aside>
+  )}
+
+  {page.kind !== 'contact' && page.kind !== 'legal' && (
+    <section class="inner-cta">
+      <div class="page-shell">
+        <p class="eyebrow eyebrow-light">{locale === 'es' ? 'Siguiente paso' : 'Next step'}</p>
+        <h2>{locale === 'es' ? 'Conversa con la clínica sobre una valoración.' : 'Contact the clinic about an evaluation.'}</h2>
+        <a class="button button-gold" href={locale === 'es' ? '/es/contacto/' : '/en/contact/'}>{locale === 'es' ? 'Ver opciones de contacto' : 'View contact options'}</a>
+      </div>
+    </section>
+  )}
+</main>
+<SiteFooter {locale} content={shell.footer} nav={shell.nav} {alternateHref} />

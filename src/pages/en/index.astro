@@ -1,0 +1,16 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import HomePage from '@/components/content/HomePage.astro';
+import { homeContent } from '@/data/home';
+const content = homeContent.en;
+---
+<BaseLayout
+  locale="en"
+  title="Dr. Ronald Salazar | Comprehensive Gynecology"
+  description="Meet Dr. Ronald Salazar, explore gynecological and obstetric care areas, and learn how to request an evaluation."
+  pathname="/en/"
+  alternatePathname="/es/"
+  skipText={content.skip}
+>
+  <HomePage locale="en" {content} />
+</BaseLayout>

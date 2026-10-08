@@ -1,0 +1,16 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import HomePage from '@/components/content/HomePage.astro';
+import { homeContent } from '@/data/home';
+const content = homeContent.es;
+---
+<BaseLayout
+  locale="es"
+  title="Dr. Ronald Salazar | Ginecología Integral"
+  description="Conoce al Dr. Ronald Salazar, sus áreas de atención ginecológica y obstétrica, y cómo solicitar una valoración."
+  pathname="/es/"
+  alternatePathname="/en/"
+  skipText={content.skip}
+>
+  <HomePage locale="es" {content} />
+</BaseLayout>

@@ -1,0 +1,19 @@
+---
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex, follow" />
+    <title>Dr. Ronald Salazar</title>
+    <script is:inline>
+      (() => {
+        const saved = localStorage.getItem('site-language-preference');
+        const locale = saved === 'es' || saved === 'en' ? saved : (navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en';
+        location.replace(`/${locale}/`);
+      })();
+    </script>
+  </head>
+  <body><main><p>Selecciona un idioma: <a href="/es/">Español</a> · <a href="/en/">English</a></p></main></body>
+</html>

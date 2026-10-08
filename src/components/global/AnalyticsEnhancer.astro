@@ -1,0 +1,16 @@
+<script>
+  import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const link = target.closest<HTMLElement>('[data-analytics-event]');
+    if (!link) return;
+
+    trackEvent(link.dataset.analyticsEvent as AnalyticsEvent, {
+      placement: link.dataset.analyticsPlacement,
+      component: link.dataset.analyticsComponent ?? 'link',
+      destination: link.dataset.analyticsDestination,
+    });
+  });
+</script>

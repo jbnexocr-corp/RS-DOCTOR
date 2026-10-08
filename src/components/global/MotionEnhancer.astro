@@ -1,0 +1,87 @@
+<script is:inline>
+  (() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData = navigator.connection?.saveData === true;
+    if (reduced || saveData) {
+      document.documentElement.dataset.motion = 'reduced';
+      return;
+    }
+
+    document.documentElement.dataset.motion = 'enhanced';
+    const mobile = window.matchMedia('(max-width: 67.99rem)').matches;
+
+    const selectors = [
+      'main section',
+      'main header',
+      'main h1',
+      'main h2',
+      'main h3',
+      'main p',
+      'main li',
+      'main article',
+      'main figure',
+      'main .button',
+      'main .text-link',
+      'main .review-status',
+      'main .breadcrumbs',
+      '.site-footer > *',
+    ];
+
+    const elements = [...document.querySelectorAll(selectors.join(','))]
+      .filter((element) => !element.closest('[data-motion-ignore]'));
+
+    elements.forEach((element, index) => {
+      element.classList.add('motion-reveal');
+      element.style.setProperty('--motion-order', String(index % 7));
+      if (mobile) element.classList.add(index % 2 === 0 ? 'motion-from-left' : 'motion-from-right');
+      if (element.matches('figure, picture, img')) element.classList.add('motion-media');
+      if (element.matches('h1, h2, h3')) element.classList.add('motion-heading');
+    });
+
+    const progress = document.createElement('span');
+    progress.className = 'motion-scroll-progress';
+    progress.setAttribute('aria-hidden', 'true');
+    document.body.append(progress);
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('motion-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+    elements.forEach((element) => observer.observe(element));
+
+    const parallaxMedia = [...document.querySelectorAll('main figure img')];
+    let ticking = false;
+    const updateParallax = () => {
+      const viewport = window.innerHeight;
+      const scrollable = document.documentElement.scrollHeight - viewport;
+      progress.style.setProperty('--reading-progress', String(scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 0));
+      elements.forEach((element) => {
+        if (element.getBoundingClientRect().top < viewport * .94) element.classList.add('motion-visible');
+      });
+      parallaxMedia.forEach((image) => {
+        const rect = image.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > viewport) return;
+        const progress = (rect.top + rect.height / 2 - viewport / 2) / viewport;
+        image.style.setProperty('--parallax-y', `${Math.max(-14, Math.min(14, progress * -24))}px`);
+      });
+      ticking = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateParallax);
+    }, { passive: true });
+    document.addEventListener('pointerdown', (event) => {
+      const target = event.target instanceof Element ? event.target.closest('a, button, summary') : null;
+      if (!target) return;
+      target.classList.remove('motion-tap');
+      requestAnimationFrame(() => target.classList.add('motion-tap'));
+      setTimeout(() => target.classList.remove('motion-tap'), 380);
+    }, { passive: true });
+    updateParallax();
+  })();
+</script>

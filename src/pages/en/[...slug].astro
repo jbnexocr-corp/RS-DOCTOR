@@ -1,0 +1,17 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import InnerPage from '@/components/content/InnerPage.astro';
+import { innerPages, type InnerPageContent } from '@/data/innerPages';
+
+export function getStaticPaths() {
+  return innerPages.en.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+
+interface Props { page: InnerPageContent }
+const { page } = Astro.props;
+const pathname = `/en/${page.slug}/`;
+const alternatePathname = `/es/${page.alternateSlug}/`;
+---
+<BaseLayout locale="en" title={`${page.title} | Dr. Ronald Salazar`} description={page.description} {pathname} {alternatePathname} skipText="Skip to main content" noindex={true}>
+  <InnerPage locale="en" {page} {pathname} />
+</BaseLayout>

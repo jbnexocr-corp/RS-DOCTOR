@@ -1,0 +1,56 @@
+---
+import type { HomeContent } from '@/data/home';
+import type { Locale } from '@/lib/i18n';
+import { formatPlaceholder } from '@/lib/placeholders';
+import SocialLinks from '@/components/navigation/SocialLinks.astro';
+import { contactDetails } from '@/data/contact';
+interface Props { locale: Locale; content: HomeContent['footer']; nav: HomeContent['nav']; alternateHref?: string }
+const { locale, content, nav, alternateHref = locale === 'es' ? '/en/' : '/es/' } = Astro.props;
+const year = new Date().getFullYear();
+const links = {
+  doctor: locale === 'es' ? '/es/dr-ronald-salazar/' : '/en/doctor-ronald-salazar/',
+  services: locale === 'es' ? '/es/servicios/' : '/en/services/',
+  surgery: locale === 'es' ? '/es/cirugia-ginecologica/' : '/en/gynecological-surgery/',
+  contact: locale === 'es' ? '/es/contacto/' : '/en/contact/',
+  privacy: locale === 'es' ? '/es/privacidad/' : '/en/privacy/',
+  terms: locale === 'es' ? '/es/terminos-de-uso/' : '/en/terms-of-use/',
+};
+---
+
+<footer class="site-footer">
+  <div class="footer-grid page-shell">
+    <div class="footer-brand">
+      <p class="footer-name">Dr. Ronald Salazar</p>
+      <p>Ginecología Integral</p>
+      <p class="footer-summary">{content.summary}</p>
+      <address class="footer-contact">
+        <a href={contactDetails.whatsapp.href} target="_blank" rel="noopener noreferrer" data-analytics-event="click_whatsapp" data-analytics-placement="footer">
+          {locale === 'es' ? 'Citas por WhatsApp' : 'Appointments on WhatsApp'}
+        </a>
+        <a href={contactDetails.phone.href} data-analytics-event="click_phone" data-analytics-placement="footer">{contactDetails.phone.display}</a>
+      </address>
+    </div>
+    <div>
+      <h2>{content.navigation}</h2>
+      <a href={`/${locale}/`}>{nav.home}</a><a href={links.doctor}>{nav.doctor}</a><a href={links.services}>{nav.services}</a><a href={links.contact}>{nav.contact}</a>
+    </div>
+    <div>
+      <h2>{content.services}</h2>
+      <a href={locale === 'es' ? '/es/gineco-obstetricia/' : '/en/obstetrics/'}>{locale === 'es' ? 'Gineco-obstetricia' : 'Obstetrics'}</a>
+      <a href={locale === 'es' ? '/es/ginecologia/' : '/en/gynecology/'}>{locale === 'es' ? 'Ginecología' : 'Gynecology'}</a>
+      <a href={links.surgery}>{locale === 'es' ? 'Cirugía ginecológica' : 'Gynecological surgery'}</a>
+    </div>
+    <div>
+      <h2>{content.legal}</h2>
+      <a href={links.privacy}>{content.privacy}</a><a href={links.terms}>{content.terms}</a>
+      <p class="footer-pending">{formatPlaceholder(content.pending, locale)}</p>
+    </div>
+    <div class="footer-social-row">
+      <SocialLinks {locale} variant="footer" />
+    </div>
+  </div>
+  <div class="footer-bottom page-shell">
+    <p>© {year} Dr. Ronald Salazar. {content.rights}</p>
+    <a href={alternateHref}>{locale === 'es' ? 'English' : 'Español'}</a>
+  </div>
+</footer>

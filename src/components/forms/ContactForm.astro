@@ -1,0 +1,26 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { formatPlaceholder } from '@/lib/placeholders';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = locale === 'es' ? {
+  legend: 'Datos para solicitar contacto', name: 'Nombre', contact: 'Teléfono o correo', preference: 'Preferencia de horario (opcional)', message: 'Mensaje (opcional)', warning: 'No incluya información médica sensible en este formulario.', consent: 'He leído el aviso de privacidad pendiente de aprobación.', submit: 'Envío pendiente de configuración', note: 'El formulario se activará cuando exista un destinatario seguro, política aprobada y protección anti-spam del lado servidor.',
+} : {
+  legend: 'Information to request contact', name: 'Name', contact: 'Phone or email', preference: 'Preferred time (optional)', message: 'Message (optional)', warning: 'Do not include sensitive medical information in this form.', consent: 'I have read the privacy notice pending approval.', submit: 'Submission setup pending', note: 'The form will be activated when a secure recipient, approved policy, and server-side spam protection are available.',
+};
+---
+<form class="contact-form" aria-describedby="form-status" aria-label={locale === 'es' ? 'Formulario pendiente de activación' : 'Form pending activation'}>
+  <fieldset disabled>
+    <legend>{t.legend}</legend>
+    <div class="form-grid">
+      <label>{t.name}<input type="text" name="name" autocomplete="name" /></label>
+      <label>{t.contact}<input type="text" name="contact" autocomplete="email" /></label>
+      <label>{t.preference}<input type="text" name="preference" autocomplete="off" /></label>
+      <label class="form-wide">{t.message}<textarea name="message" rows="4"></textarea></label>
+    </div>
+    <p class="form-warning">{t.warning}</p>
+    <label class="check-label"><input type="checkbox" name="privacy" /> <span>{formatPlaceholder(t.consent, locale)}</span></label>
+    <button class="button button-primary" type="submit" disabled>{formatPlaceholder(t.submit, locale)}</button>
+    <p id="form-status" class="form-status">{formatPlaceholder(t.note, locale)}</p>
+  </fieldset>
+</form>

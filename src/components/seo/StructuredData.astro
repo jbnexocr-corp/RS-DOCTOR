@@ -1,0 +1,96 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { absoluteUrl, site } from '@/lib/site';
+import { officialSocialProfiles } from '@/data/social';
+import { contactDetails } from '@/data/contact';
+
+interface Props { locale: Locale; pathname: string }
+const { locale, pathname } = Astro.props;
+const pageUrl = absoluteUrl(pathname);
+const isContactPage = /\/(contacto|contact)\/?$/.test(pathname);
+
+const contactPoint = {
+  '@type': 'ContactPoint',
+  telephone: contactDetails.phone.international,
+  contactType: locale === 'es' ? 'solicitud de citas' : 'appointment requests',
+  url: contactDetails.whatsapp.href,
+  areaServed: 'CR',
+  availableLanguage: ['es', 'en'],
+};
+
+const graphItems: Record<string, unknown>[] = [
+  {
+    '@type': 'Person',
+    '@id': site.url ? `${site.url}/#doctor` : '#doctor',
+    name: 'Dr. Ronald Salazar',
+    description: locale === 'es' ? 'Dr. Ronald Salazar, Ginecología Integral.' : 'Dr. Ronald Salazar, Comprehensive Gynecology.',
+    url: pageUrl,
+    telephone: contactDetails.phone.international,
+    contactPoint,
+    sameAs: officialSocialProfiles,
+  },
+  {
+    '@type': 'WebSite',
+    '@id': site.url ? `${site.url}/#website` : '#website',
+    name: `${site.name} — ${site.descriptor}`,
+    inLanguage: locale,
+    url: pageUrl,
+  },
+  {
+    '@type': isContactPage ? ['WebPage', 'ContactPage'] : 'WebPage',
+    '@id': pageUrl ? `${pageUrl}#webpage` : '#webpage',
+    url: pageUrl,
+    inLanguage: locale,
+    isPartOf: { '@id': site.url ? `${site.url}/#website` : '#website' },
+    about: { '@id': site.url ? `${site.url}/#doctor` : '#doctor' },
+  },
+];
+
+if (isContactPage) {
+  graphItems.push({
+    '@type': 'FAQPage',
+    '@id': pageUrl ? `${pageUrl}#contact-faq` : '#contact-faq',
+    inLanguage: locale,
+    mainEntity: locale === 'es' ? [
+      {
+        '@type': 'Question',
+        name: '¿Cómo solicito información para una cita?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Escribe por WhatsApp o llama al +506 6429 7669. La clínica confirmará disponibilidad y el siguiente paso.' },
+      },
+      {
+        '@type': 'Question',
+        name: '¿Qué información debo enviar?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Comparte tu nombre y disponibilidad. No envíes diagnósticos, resultados ni información médica sensible por un canal general.' },
+      },
+      {
+        '@type': 'Question',
+        name: '¿El mensaje confirma automáticamente la cita?',
+        acceptedAnswer: { '@type': 'Answer', text: 'No. El mensaje inicia la solicitud y el consultorio debe confirmar la fecha y disponibilidad.' },
+      },
+    ] : [
+      {
+        '@type': 'Question',
+        name: 'How do I request appointment information?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Send a WhatsApp message or call +506 6429 7669. The clinic will confirm availability and the next step.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'What information should I send?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Share your name and availability. Do not send diagnoses, results, or sensitive medical information through a general contact channel.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Does the message automatically confirm the appointment?',
+        acceptedAnswer: { '@type': 'Answer', text: 'No. The message starts the request and the office must confirm the date and availability.' },
+      },
+    ],
+  });
+}
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': graphItems,
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(graph)} />

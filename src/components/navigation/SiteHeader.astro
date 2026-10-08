@@ -1,0 +1,134 @@
+---
+import { Image } from 'astro:assets';
+import logo from '@/assets/images/logo-raster-pending-vector.jpeg';
+import type { HomeContent } from '@/data/home';
+import type { Locale } from '@/lib/i18n';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import { contactDetails } from '@/data/contact';
+
+interface Props { locale: Locale; content: HomeContent['nav']; currentPath?: string; alternateHref?: string }
+const { locale, content, currentPath = `/${locale}/`, alternateHref = locale === 'es' ? '/en/' : '/es/' } = Astro.props;
+const links = {
+  home: `/${locale}/`,
+  doctor: locale === 'es' ? '/es/dr-ronald-salazar/' : '/en/doctor-ronald-salazar/',
+  services: locale === 'es' ? '/es/servicios/' : '/en/services/',
+  pregnancy: locale === 'es' ? '/es/embarazo/recursos/' : '/en/pregnancy/resources/',
+  articles: locale === 'es' ? '/es/articulos/' : '/en/articles/',
+  contact: locale === 'es' ? '/es/contacto/' : '/en/contact/',
+};
+const servicePillars = locale === 'es' ? [
+  ['Gineco-obstetricia', '/es/gineco-obstetricia/'],
+  ['Ginecología', '/es/ginecologia/'],
+  ['Cirugía ginecológica', '/es/cirugia-ginecologica/'],
+  ['Salud íntima', '/es/salud-intima/'],
+  ['Piso pélvico', '/es/piso-pelvico/'],
+  ['Atención integral', '/es/atencion-integral/'],
+] : [
+  ['Obstetrics', '/en/obstetrics/'],
+  ['Gynecology', '/en/gynecology/'],
+  ['Gynecological surgery', '/en/gynecological-surgery/'],
+  ['Intimate health', '/en/intimate-health/'],
+  ['Pelvic floor', '/en/pelvic-floor/'],
+  ['Integrated care', '/en/integrated-care/'],
+];
+---
+
+<header class="site-header" data-site-header>
+  <div class="header-inner page-shell">
+    <a class="brand" href={`/${locale}/`} aria-label={`${content.home} — Dr. Ronald Salazar`}>
+      <Image src={logo} alt="Dr. Ronald Salazar, Ginecología Integral" width={300} quality={90} />
+    </a>
+    <div class="header-actions">
+      <LanguageSwitcher {locale} {alternateHref} />
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+        <span class="menu-label">{locale === 'es' ? 'Menú' : 'Menu'}</span>
+        <span class="menu-lines" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+    <nav id="primary-navigation" class="primary-navigation" aria-label={locale === 'es' ? 'Navegación principal' : 'Primary navigation'}>
+      <a href={links.home} aria-current={currentPath === links.home ? 'page' : undefined}>{content.home}</a>
+      <a href={links.doctor} aria-current={currentPath === links.doctor ? 'page' : undefined}>{content.doctor}</a>
+      <details class="services-navigation">
+        <summary>{content.services}</summary>
+        <div class="services-navigation-panel">
+          <a href={links.services} aria-current={currentPath === links.services ? 'page' : undefined}>{locale === 'es' ? 'Ver todos los servicios' : 'View all services'}</a>
+          {servicePillars.map(([label, href]) => <a href={href} aria-current={currentPath === href ? 'page' : undefined}>{label}</a>)}
+        </div>
+      </details>
+      <a href={links.pregnancy} aria-current={currentPath === links.pregnancy ? 'page' : undefined}>{content.pregnancy}</a>
+      <a href={links.articles} aria-current={currentPath === links.articles ? 'page' : undefined}>{content.articles}</a>
+      <a href={links.contact} aria-current={currentPath === links.contact ? 'page' : undefined}>{content.contact}</a>
+      <a class="header-cta" href={contactDetails.whatsapp.href} target="_blank" rel="noopener noreferrer" data-analytics-event="click_whatsapp" data-analytics-placement="header">{content.appointment}</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  const toggle = header?.querySelector<HTMLButtonElement>('.menu-toggle');
+  const nav = header?.querySelector<HTMLElement>('.primary-navigation');
+  let previousFocus: HTMLElement | null = null;
+
+  const closeMenu = () => {
+    if (!header || !toggle) return;
+    header.dataset.open = 'false';
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('menu-open');
+    previousFocus?.focus();
+  };
+
+  const openMenu = () => {
+    if (!header || !toggle || !nav) return;
+    previousFocus = document.activeElement as HTMLElement;
+    header.classList.remove('site-header-hidden');
+    header.dataset.open = 'true';
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('menu-open');
+    nav.querySelector<HTMLElement>('a')?.focus();
+  };
+
+  toggle?.addEventListener('click', () => toggle.getAttribute('aria-expanded') === 'true' ? closeMenu() : openMenu());
+  nav?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+  document.addEventListener('click', (event) => {
+    header?.querySelectorAll<HTMLDetailsElement>('.services-navigation[open]').forEach((details) => {
+      if (!details.contains(event.target as Node)) details.removeAttribute('open');
+    });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') closeMenu();
+    if (event.key !== 'Tab' || toggle?.getAttribute('aria-expanded') !== 'true' || !nav || !toggle) return;
+    const focusable = [toggle, ...nav.querySelectorAll<HTMLElement>('a')];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+  window.matchMedia('(min-width: 68rem)').addEventListener('change', (event) => { if (event.matches) closeMenu(); });
+
+  let lastScrollY = window.scrollY;
+  let headerTicking = false;
+  const updateHeaderVisibility = () => {
+    if (!header) return;
+    const currentScrollY = Math.max(0, window.scrollY);
+    const delta = currentScrollY - lastScrollY;
+    const menuIsOpen = toggle?.getAttribute('aria-expanded') === 'true';
+
+    if (currentScrollY < 12 || menuIsOpen || header.contains(document.activeElement)) {
+      header.classList.remove('site-header-hidden');
+    } else if (delta > 2) {
+      header.classList.add('site-header-hidden');
+    } else if (delta < -2) {
+      header.classList.remove('site-header-hidden');
+    }
+
+    lastScrollY = currentScrollY;
+    headerTicking = false;
+  };
+
+  window.addEventListener('scroll', () => {
+    if (headerTicking) return;
+    headerTicking = true;
+    requestAnimationFrame(updateHeaderVisibility);
+  }, { passive: true });
+  header?.addEventListener('focusin', () => header.classList.remove('site-header-hidden'));
+</script>

@@ -1,0 +1,60 @@
+---
+import type { Locale } from '@/lib/i18n';
+import type { ServiceDetail } from '@/data/serviceDetails';
+import { homeContent } from '@/data/home';
+import SiteHeader from '@/components/navigation/SiteHeader.astro';
+import SiteFooter from '@/components/footer/SiteFooter.astro';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+import { formatPlaceholder } from '@/lib/placeholders';
+
+interface Props { locale: Locale; service: ServiceDetail; pathname: string }
+const { locale, service, pathname } = Astro.props;
+const shell = homeContent[locale];
+const alternateHref = locale === 'es' ? `/en/services/${service.alternateSlug}/` : `/es/servicios/${service.alternateSlug}/`;
+const pillarHref = locale === 'es' ? `/es/${service.pillarSlug}/` : `/en/${service.pillarSlug}/`;
+---
+
+<SiteHeader {locale} content={shell.nav} currentPath={pathname} {alternateHref} />
+<main id="main-content" class="service-detail-page">
+  <div class="inner-breadcrumb-shell page-shell"><Breadcrumbs {locale} title={service.title} {pathname} /></div>
+  <header class="service-detail-hero">
+    <div class="page-shell service-detail-heading">
+      <p class="eyebrow">{service.eyebrow}</p>
+      <h1>{service.title}</h1>
+      <p class="service-summary">{service.summary}</p>
+      <div class="button-row">
+        <a class="button button-primary" href={locale === 'es' ? '/es/contacto/' : '/en/contact/'}>{locale === 'es' ? 'Solicitar valoración' : 'Request an evaluation'}</a>
+        <a class="text-link" href={pillarHref}>{locale === 'es' ? 'Volver al área' : 'Back to care area'} <span aria-hidden="true">→</span></a>
+      </div>
+      <p class="review-status">{formatPlaceholder(locale === 'es' ? 'Revisión médica pendiente' : 'Medical review pending', locale)}</p>
+    </div>
+  </header>
+
+  <section class="section service-detail-body" aria-label={locale === 'es' ? 'Información del servicio' : 'Service information'}>
+    <div class="page-shell service-detail-grid">
+      {service.sections.map((section, index) => (
+        <article>
+          <span>{String(index + 1).padStart(2, '0')}</span>
+          <h2>{section.title}</h2>
+          <p>{section.body}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section service-questions">
+    <div class="page-shell questions-grid">
+      <div><p class="eyebrow">{locale === 'es' ? 'Preguntas para la consulta' : 'Questions for your visit'}</p><h2>{locale === 'es' ? 'Qué conviene conversar durante la valoración' : 'What to discuss during your evaluation'}</h2></div>
+      <ol>{service.questions.map((question) => <li>{question}</li>)}</ol>
+    </div>
+  </section>
+
+  <section class="inner-cta">
+    <div class="page-shell">
+      <p class="eyebrow eyebrow-light">{locale === 'es' ? 'Siguiente paso' : 'Next step'}</p>
+      <h2>{locale === 'es' ? 'La indicación se define después de una valoración individual.' : 'Recommendations are defined after an individual evaluation.'}</h2>
+      <a class="button button-gold" href={locale === 'es' ? '/es/contacto/' : '/en/contact/'}>{locale === 'es' ? 'Ver opciones de contacto' : 'View contact options'}</a>
+    </div>
+  </section>
+</main>
+<SiteFooter {locale} content={shell.footer} nav={shell.nav} {alternateHref} />

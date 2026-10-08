@@ -1,0 +1,39 @@
+---
+import type { Locale } from '@/lib/i18n';
+import SEO from '@/components/seo/SEO.astro';
+import StructuredData from '@/components/seo/StructuredData.astro';
+import '@/styles/global.css';
+import '@/styles/motion.css';
+import MotionEnhancer from '@/components/global/MotionEnhancer.astro';
+import AnalyticsEnhancer from '@/components/global/AnalyticsEnhancer.astro';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  pathname: string;
+  alternatePathname: string;
+  skipText: string;
+  noindex?: boolean;
+}
+const props = Astro.props;
+---
+
+<!doctype html>
+<html lang={props.locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#f4f0e8" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <SEO {...props} />
+    <StructuredData locale={props.locale} pathname={props.pathname} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">{props.skipText}</a>
+    <slot />
+    <MotionEnhancer />
+    <AnalyticsEnhancer />
+  </body>
+</html>

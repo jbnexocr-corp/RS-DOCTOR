@@ -1,0 +1,33 @@
+---
+import type { Locale } from '@/lib/i18n';
+interface Props { locale: Locale; alternateHref: string }
+const { locale, alternateHref } = Astro.props;
+---
+
+<div class="language-switcher" role="group" aria-label={locale === 'es' ? 'Seleccionar idioma' : 'Select language'}>
+  {locale === 'es' ? (
+    <>
+      <span class="language-option language-option-current" lang="es" aria-current="true" aria-label="Idioma actual: Español">
+        <b>ES</b>
+      </span>
+      <a class="language-option" href={alternateHref} lang="en" hreflang="en" data-language-choice="en" aria-label="View in English">
+        <b>EN</b>
+      </a>
+    </>
+  ) : (
+    <>
+      <a class="language-option" href={alternateHref} lang="es" hreflang="es" data-language-choice="es" aria-label="Ver en español">
+        <b>ES</b>
+      </a>
+      <span class="language-option language-option-current" lang="en" aria-current="true" aria-label="Current language: English">
+        <b>EN</b>
+      </span>
+    </>
+  )}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-language-choice]').forEach((link) => {
+    link.addEventListener('click', () => localStorage.setItem('site-language-preference', link.dataset.languageChoice || 'es'));
+  });
+</script>

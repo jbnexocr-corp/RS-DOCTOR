@@ -1,0 +1,55 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { contactDetails } from '@/data/contact';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = locale === 'es' ? {
+  eyebrow: 'Contacto directo',
+  title: 'Habla con el consultorio por WhatsApp',
+  intro: 'Es la forma más rápida de solicitar información para una cita. La clínica confirmará la disponibilidad y el siguiente paso.',
+  whatsapp: 'Solicitar cita por WhatsApp',
+  call: 'Llamar al consultorio',
+  note: 'Envía únicamente tu nombre y disponibilidad. No compartas diagnósticos, resultados ni información médica sensible.',
+  availability: 'Este contacto no confirma una cita ni funciona como canal de emergencias.',
+} : {
+  eyebrow: 'Direct contact',
+  title: 'Contact the office on WhatsApp',
+  intro: 'This is the fastest way to request appointment information. The clinic will confirm availability and the next step.',
+  whatsapp: 'Request an appointment on WhatsApp',
+  call: 'Call the office',
+  note: 'Share only your name and availability. Do not send diagnoses, results, or sensitive medical information.',
+  availability: 'This contact does not confirm an appointment and is not an emergency channel.',
+};
+---
+
+<div class="contact-channels">
+  <div class="contact-channels-copy">
+    <p class="eyebrow">{t.eyebrow}</p>
+    <h2 id="direct-contact-title">{t.title}</h2>
+    <p>{t.intro}</p>
+  </div>
+  <div class="contact-actions" aria-label={locale === 'es' ? 'Opciones para contactar al consultorio' : 'Options to contact the office'}>
+    <a
+      class="button button-primary contact-action-primary"
+      href={contactDetails.whatsapp.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-analytics-event="click_whatsapp"
+      data-analytics-placement="contact_page"
+      aria-label={`${t.whatsapp}: ${contactDetails.phone.display}`}
+    >
+      <span aria-hidden="true">WA</span>{t.whatsapp}
+    </a>
+    <a
+      class="contact-phone-link"
+      href={contactDetails.phone.href}
+      data-analytics-event="click_phone"
+      data-analytics-placement="contact_page"
+    >
+      <span>{t.call}</span><strong>{contactDetails.phone.display}</strong>
+    </a>
+    <p class="contact-privacy-note">{t.note}</p>
+    <p class="contact-availability-note">{t.availability}</p>
+  </div>
+</div>

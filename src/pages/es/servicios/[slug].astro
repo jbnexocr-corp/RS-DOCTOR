@@ -1,0 +1,15 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ServiceDetailPage from '@/components/content/ServiceDetailPage.astro';
+import { serviceDetails } from '@/data/serviceDetails';
+
+export function getStaticPaths() {
+  return serviceDetails.es.map((service) => ({ params: { slug: service.slug }, props: { service } }));
+}
+const { service } = Astro.props;
+const pathname = `/es/servicios/${service.slug}/`;
+const alternatePathname = `/en/services/${service.alternateSlug}/`;
+---
+<BaseLayout locale="es" title={`${service.title} | Dr. Ronald Salazar`} description={service.description} {pathname} {alternatePathname} skipText="Saltar al contenido principal" noindex={true}>
+  <ServiceDetailPage locale="es" {service} {pathname} />
+</BaseLayout>
