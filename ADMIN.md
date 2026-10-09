@@ -15,7 +15,9 @@ El panel está disponible en `/admin/`. En producción usa PostgreSQL y Railway 
 
 ## Acceso
 
-El middleware protege `/admin/` y `/api/admin/` con `ADMIN_USERNAME` y `ADMIN_PASSWORD`. En producción, si falta la contraseña, el panel responde `503` en vez de quedar expuesto.
+El middleware protege `/admin/` y `/api/admin/` mediante un formulario propio. La contraseña se verifica contra `ADMIN_PASSWORD_HASH` usando scrypt y nunca se guarda en texto plano. La sesión utiliza una cookie firmada, `HttpOnly`, `SameSite=Strict`, segura sobre HTTPS y con duración máxima de ocho horas.
+
+Variables requeridas: `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` y `ADMIN_SESSION_SECRET`. Para rotar la contraseña, ejecutar `npm run admin:hash-password` y reemplazar únicamente el hash en Railway. El login limita los intentos fallidos y el panel incluye cierre de sesión.
 
 ## API
 

@@ -1,0 +1,43 @@
+---
+import '@/styles/admin.css';
+import { ADMIN_SESSION_COOKIE, isAdminAuthConfigured, verifyAdminSession } from '@/lib/server/auth';
+
+if (verifyAdminSession(Astro.cookies.get(ADMIN_SESSION_COOKIE)?.value)) return Astro.redirect('/admin/');
+const configured = isAdminAuthConfigured();
+const error = Astro.url.searchParams.get('error');
+const next = Astro.url.searchParams.get('next') || '/admin/';
+const message = error === 'locked'
+  ? 'Demasiados intentos. Espera 15 minutos antes de intentarlo nuevamente.'
+  : error === 'invalid' ? 'Usuario o contraseña incorrectos.' : '';
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Acceso administrativo | Dr. Ronald Salazar</title>
+  </head>
+  <body class="admin-login-page">
+    <main class="admin-login-shell">
+      <section class="admin-login-card" aria-labelledby="login-title">
+        <a class="admin-login-brand" href="/es/" aria-label="Volver al sitio"><span>RS</span><b>Estudio editorial</b></a>
+        <p class="admin-kicker">Acceso privado</p>
+        <h1 id="login-title">Panel de administración</h1>
+        <p class="admin-login-intro">Ingresa con la cuenta administrativa autorizada.</p>
+        {message && <p class="admin-login-alert" role="alert">{message}</p>}
+        {Astro.url.searchParams.has('loggedOut') && <p class="admin-login-success" role="status">La sesión se cerró correctamente.</p>}
+        {!configured && <p class="admin-login-alert" role="alert">La autenticación aún no está configurada en el servidor.</p>}
+        <form method="post" action="/api/auth/login/" class="admin-login-form">
+          <input type="hidden" name="next" value={next} />
+          <label>Usuario<input name="username" autocomplete="username" required maxlength="120" autofocus /></label>
+          <label>Contraseña<input name="password" type="password" autocomplete="current-password" required maxlength="512" /></label>
+          <button class="admin-primary" type="submit" disabled={!configured}>Ingresar al panel</button>
+        </form>
+        <p class="admin-login-note">La sesión expira automáticamente después de 8 horas.</p>
+      </section>
+    </main>
+  </body>
+</html>

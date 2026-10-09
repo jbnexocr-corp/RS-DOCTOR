@@ -1,30 +1,20 @@
 import { defineMiddleware } from 'astro:middleware';
-import { createHash, timingSafeEqual } from 'node:crypto';
-
-const digest = (value: string) => createHash('sha256').update(value).digest();
-const safeEqual = (left: string, right: string) => timingSafeEqual(digest(left), digest(right));
+import { ADMIN_SESSION_COOKIE, isAdminAuthConfigured, verifyAdminSession } from '@/lib/server/auth';
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const protectedRoute = context.url.pathname.startsWith('/admin') || context.url.pathname.startsWith('/api/admin');
+  const pathname = context.url.pathname;
+  const protectedRoute = (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) || pathname.startsWith('/api/admin');
   if (protectedRoute) {
-    const expectedUser = process.env.ADMIN_USERNAME || 'admin';
-    const expectedPassword = process.env.ADMIN_PASSWORD;
-    const allowUnconfiguredLocal = import.meta.env.DEV && !expectedPassword;
-    if (!allowUnconfiguredLocal) {
-      if (!expectedPassword) return new Response('ADMIN_PASSWORD is not configured', { status: 503 });
-      const authorization = context.request.headers.get('authorization');
-      let valid = false;
-      if (authorization?.startsWith('Basic ')) {
-        try {
-          const [username, password] = atob(authorization.slice(6)).split(':', 2);
-          valid = safeEqual(username, expectedUser) && safeEqual(password, expectedPassword);
-        } catch { valid = false; }
-      }
-      if (!valid) {
-        return new Response('Authentication required', {
-          status: 401,
-          headers: { 'WWW-Authenticate': 'Basic realm="Dr. Ronald Admin", charset="UTF-8"' },
-        });
+    const bypassForTests = import.meta.env.DEV && process.env.ADMIN_AUTH_DISABLED === 'true';
+    if (!bypassForTests) {
+      const authenticated = verifyAdminSession(context.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+      if (!authenticated) {
+        if (pathname.startsWith('/api/admin')) {
+          const configured = isAdminAuthConfigured();
+          return Response.json({ error: configured ? 'Authentication required' : 'Admin authentication is not configured' }, { status: configured ? 401 : 503 });
+        }
+        const nextPath = `${pathname}${context.url.search}`;
+        return context.redirect(`/admin/login/?next=${encodeURIComponent(nextPath)}`, 303);
       }
     }
   }

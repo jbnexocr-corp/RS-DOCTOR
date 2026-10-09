@@ -31,7 +31,7 @@ const initialRecords = [
   <main class="admin-main">
     <header class="admin-topbar">
       <div><p>Dr. Ronald Salazar</p><h1>Panel de administración</h1></div>
-      <div class="admin-top-actions"><span id="save-indicator" role="status">Todo guardado</span><button class="admin-primary" type="button" data-new-record>Nuevo contenido</button></div>
+      <div class="admin-top-actions"><span id="save-indicator" role="status">Todo guardado</span><button class="admin-primary" type="button" data-new-record>Nuevo contenido</button><form method="post" action="/api/auth/logout/"><button class="secondary-button" type="submit">Cerrar sesión</button></form></div>
     </header>
 
     <section class="admin-view" data-panel="dashboard">

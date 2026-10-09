@@ -10,6 +10,7 @@
     "build": "astro check && astro build",
     "start": "npm run db:migrate && node ./dist/server/entry.mjs",
     "db:migrate": "node scripts/migrate.mjs",
+    "admin:hash-password": "node scripts/hash-admin-password.mjs",
     "preview": "node ./dist/server/entry.mjs",
     "typecheck": "astro check",
     "lint": "astro check",

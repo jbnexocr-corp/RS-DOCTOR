@@ -22,7 +22,7 @@ npm run test
 npm run test:e2e
 ```
 
-Copiar `.env.example` a `.env` para desarrollo. En Railway se deben inyectar `DATABASE_URL`, las credenciales del Bucket, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. La URL pública debe configurarse en `PUBLIC_SITE_URL` antes de producción.
+Copiar `.env.example` a `.env` para desarrollo. En Railway se deben inyectar `DATABASE_URL`, las credenciales del Bucket, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` y `ADMIN_SESSION_SECRET`. La URL pública debe configurarse en `PUBLIC_SITE_URL` antes de producción.
 
 ## Estado actual
 
