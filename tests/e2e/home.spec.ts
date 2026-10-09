@@ -133,3 +133,28 @@ test('admin supports local CRUD and persists a new record', async ({ page }) => 
   await page.getByRole('button', { name: 'Contenido', exact: true }).click();
   await expect(page.getByRole('cell', { name: /Artículo de prueba editorial/ })).toBeVisible();
 });
+
+test('deployment endpoints expose health, robots and dynamic sitemap', async ({ request }) => {
+  const health = await request.get('/api/health/');
+  expect(health.status()).toBe(200);
+  expect(await health.json()).toMatchObject({
+    ok: true,
+    database: 'not-configured',
+    objectStorage: 'not-configured',
+  });
+
+  const robots = await request.get('/robots.txt');
+  expect(robots.status()).toBe(200);
+  expect(await robots.text()).toContain('Disallow: /admin/');
+
+  const sitemap = await request.get('/sitemap.xml');
+  expect(sitemap.status()).toBe(200);
+  const sitemapXml = await sitemap.text();
+  expect(sitemapXml).toContain('/es/');
+  expect(sitemapXml).toContain('/es/articulos/');
+});
+
+test('an unpublished article slug returns 404', async ({ request }) => {
+  const response = await request.get('/es/articulos/articulo-inexistente/');
+  expect(response.status()).toBe(404);
+});

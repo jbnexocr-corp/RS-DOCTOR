@@ -1,0 +1,11 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import InnerPage from '@/components/content/InnerPage.astro';
+import { innerPages } from '@/data/innerPages';
+export const prerender = false;
+const page = innerPages.en.find((item) => item.kind === 'articles')!;
+const pathname = '/en/articles/';
+---
+<BaseLayout locale="en" title={`${page.title} | Dr. Ronald Salazar`} description={page.description} {pathname} alternatePathname="/es/articulos/" skipText="Skip to main content">
+  <InnerPage locale="en" {page} {pathname} />
+</BaseLayout>

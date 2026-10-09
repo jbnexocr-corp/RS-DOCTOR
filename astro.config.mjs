@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
 
 const previewHosts = process.env.PUBLIC_PREVIEW_HOST
   ?.split(',')
@@ -6,7 +7,11 @@ const previewHosts = process.env.PUBLIC_PREVIEW_HOST
   .filter(Boolean);
 
 export default defineConfig({
-  output: 'static',
+  output: 'server',
+  adapter: node({
+    mode: 'standalone',
+    bodySizeLimit: 10 * 1024 * 1024,
+  }),
   trailingSlash: 'always',
   build: { format: 'directory' },
   compressHTML: true,

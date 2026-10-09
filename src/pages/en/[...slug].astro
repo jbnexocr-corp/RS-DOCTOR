@@ -4,8 +4,9 @@ import InnerPage from '@/components/content/InnerPage.astro';
 import { innerPages, type InnerPageContent } from '@/data/innerPages';
 
 export function getStaticPaths() {
-  return innerPages.en.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+  return innerPages.en.filter((page) => page.kind !== 'articles').map((page) => ({ params: { slug: page.slug }, props: { page } }));
 }
+export const prerender = true;
 
 interface Props { page: InnerPageContent }
 const { page } = Astro.props;

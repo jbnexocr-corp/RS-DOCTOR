@@ -3,6 +3,7 @@ import { serviceDetails } from '@/data/serviceDetails';
 import { innerPages } from '@/data/innerPages';
 
 const now = new Date().toISOString();
+const databaseMode = Boolean(process.env.DATABASE_URL);
 const initialRecords = [
   ...serviceDetails.es.map((item) => ({ id: `service-${item.slug}`, collection: 'services', locale: 'es', status: item.reviewStatus, title: item.title, slug: item.slug, summary: item.summary, updatedAt: now, notes: 'La versión en inglés está relacionada mediante alternateSlug.' })),
   ...serviceDetails.en.map((item) => ({ id: `service-en-${item.slug}`, collection: 'services', locale: 'en', status: item.reviewStatus, title: item.title, slug: item.slug, summary: item.summary, updatedAt: now, notes: 'English counterpart prepared for human review.' })),
@@ -10,7 +11,7 @@ const initialRecords = [
 ];
 ---
 
-<div class="admin-shell" data-admin-app data-seed={JSON.stringify(initialRecords)}>
+<div class="admin-shell" data-admin-app data-admin-mode={databaseMode ? 'database' : 'local'} data-seed={JSON.stringify(initialRecords)}>
   <aside class="admin-sidebar">
     <a class="admin-brand" href="/es/" aria-label="Volver al sitio">
       <span>RS</span><b>Estudio editorial</b>
@@ -23,7 +24,7 @@ const initialRecords = [
     </nav>
     <div class="admin-mode">
       <span></span>
-      <p><strong>Modo local</strong>Los cambios se guardan únicamente en este navegador.</p>
+      <p><strong>{databaseMode ? 'Railway PostgreSQL' : 'Modo local'}</strong>{databaseMode ? 'Contenido sincronizado y persistente.' : 'Los cambios se guardan únicamente en este navegador.'}</p>
     </div>
   </aside>
 
@@ -34,7 +35,7 @@ const initialRecords = [
     </header>
 
     <section class="admin-view" data-panel="dashboard">
-      <div class="admin-section-heading"><div><p class="admin-kicker">Estado editorial</p><h2>Vista general</h2></div><p>Control local de páginas, servicios, artículos, equipo, ubicaciones y recursos.</p></div>
+      <div class="admin-section-heading"><div><p class="admin-kicker">Estado editorial</p><h2>Vista general</h2></div><p>{databaseMode ? 'Control persistente de contenido, artículos y medios en Railway.' : 'Control local de páginas, servicios, artículos, equipo, ubicaciones y recursos.'}</p></div>
       <div class="metric-grid" id="metric-grid"></div>
       <div class="dashboard-grid">
         <article class="admin-card">
@@ -80,13 +81,13 @@ const initialRecords = [
     </section>
 
     <section class="admin-view" data-panel="backup" hidden>
-      <div class="admin-section-heading"><div><p class="admin-kicker">Portabilidad</p><h2>Respaldo e importación</h2></div><p>Exporta todos los registros antes de limpiar el navegador o cambiar de computadora.</p></div>
+      <div class="admin-section-heading"><div><p class="admin-kicker">Portabilidad</p><h2>Respaldo e importación</h2></div><p>{databaseMode ? 'Exporta una copia adicional de PostgreSQL o restaura contenido editorial validado.' : 'Exporta todos los registros antes de limpiar el navegador o cambiar de computadora.'}</p></div>
       <div class="backup-grid">
         <article class="admin-card"><h3>Exportar copia completa</h3><p>Descarga contenido, configuración e historial como JSON portable.</p><button class="admin-primary" type="button" id="export-data">Descargar respaldo</button></article>
         <article class="admin-card"><h3>Importar respaldo</h3><p>Restaura un archivo exportado por este panel. Se valida antes de reemplazar datos.</p><label class="file-button">Seleccionar archivo<input type="file" id="import-data" accept="application/json" /></label></article>
-        <article class="admin-card danger-card"><h3>Restablecer datos locales</h3><p>Recupera el contenido inicial del proyecto y elimina las ediciones de este navegador.</p><button type="button" class="danger-button" id="reset-data">Restablecer</button></article>
+        <article class="admin-card danger-card"><h3>Restablecer contenido</h3><p>{databaseMode ? 'Reemplaza los registros actuales de PostgreSQL por el contenido inicial.' : 'Recupera el contenido inicial del proyecto y elimina las ediciones de este navegador.'}</p><button type="button" class="danger-button" id="reset-data">Restablecer</button></article>
       </div>
-      <article class="admin-card integration-card"><p class="admin-kicker">Adaptador futuro</p><h3>Listo para conectar almacenamiento real</h3><p>El contrato del panel separa lectura, escritura, actualización y eliminación. Al elegir hosting se reemplaza el adaptador local por una API autenticada con base de datos, permisos, copias y archivos.</p><code>ContentRepository: list · get · create · update · remove · export</code></article>
+      <article class="admin-card integration-card"><p class="admin-kicker">Infraestructura</p><h3>{databaseMode ? 'PostgreSQL y Railway Bucket conectados' : 'Modo local de desarrollo'}</h3><p>{databaseMode ? 'Los registros se sincronizan mediante una API protegida y las imágenes se almacenan fuera de la base de datos.' : 'Al configurar Railway, el mismo panel cambia automáticamente a persistencia PostgreSQL y almacenamiento de objetos.'}</p><code>ContentRepository: list · get · create · update · remove · export</code></article>
     </section>
   </main>
 
@@ -101,10 +102,16 @@ const initialRecords = [
         <label>Slug<input name="slug" required pattern="[a-z0-9]+(?:[a-z0-9\-/]*[a-z0-9])?" /></label>
         <label>Estado<select name="status" required><option value="draft">Borrador</option><option value="pending-medical-review">Revisión médica pendiente</option><option value="approved">Aprobado</option><option value="published">Publicado</option><option value="archived">Archivado</option></select></label>
         <label class="record-wide">Resumen<textarea name="summary" rows="4" required></textarea></label>
+        <label class="record-wide">Contenido principal<textarea name="body" rows="10" placeholder="Texto completo del artículo o contenido editorial"></textarea></label>
+        <label>Autor<input name="author" maxlength="120" /></label>
+        <label>Revisor médico<input name="medicalReviewer" maxlength="120" /></label>
+        <label>Fecha de revisión<input name="reviewDate" type="date" /></label>
+        <label class="record-wide">Fuentes<textarea name="sources" rows="4" placeholder="Una referencia o URL por línea"></textarea></label>
         <label class="record-wide">Notas editoriales<textarea name="notes" rows="4"></textarea></label>
         <label class="record-wide">Texto alternativo de imagen<input name="altText" maxlength="180" placeholder="Describe la imagen para quien no puede verla" /></label>
-        <label class="record-wide media-upload">Archivo de imagen<input name="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml" /><small>Modo local: máximo 1 MB. El archivo se incluirá en el respaldo JSON.</small></label>
+        <label class="record-wide media-upload">Archivo de imagen<input name="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /><small>{databaseMode ? 'Railway Bucket: JPEG, PNG, WebP o AVIF; máximo 8 MB.' : 'Modo local: máximo 1 MB. El archivo se incluirá en el respaldo JSON.'}</small></label>
         <input type="hidden" name="imageData" />
+        <input type="hidden" name="imageKey" />
       </div>
       <p class="form-help">Publicar contenido médico requiere aprobación. El panel conserva el estado y el historial de cada cambio.</p>
       <div class="dialog-actions"><button type="button" class="secondary-button" data-close-dialog>Cancelar</button><button type="submit" class="admin-primary">Guardar registro</button></div>
@@ -115,15 +122,18 @@ const initialRecords = [
 </div>
 
 <script>
-  type RecordItem = { id: string; collection: string; locale: string; status: string; title: string; slug: string; summary: string; updatedAt: string; notes: string; altText?: string; imageData?: string };
+  type RecordItem = { id: string; collection: string; locale: string; status: string; title: string; slug: string; summary: string; body?: string; updatedAt: string; notes: string; author?: string; medicalReviewer?: string; reviewDate?: string; sources?: string; altText?: string; imageData?: string; imageKey?: string };
   type AdminState = { version: number; records: RecordItem[]; settings: Record<string, string | boolean>; audit: Array<{ id: string; message: string; at: string }> };
   const app = document.querySelector<HTMLElement>('[data-admin-app]');
   if (app) {
     const storageKey = 'ronald-salazar-admin-v1';
+    const remoteMode = app.dataset.adminMode === 'database';
     const seed = JSON.parse(app.dataset.seed || '[]') as RecordItem[];
-    const defaultState: AdminState = { version: 1, records: seed, settings: {}, audit: [{ id: crypto.randomUUID(), message: 'Panel local inicializado', at: new Date().toISOString() }] };
-    let state: AdminState;
-    try { state = JSON.parse(localStorage.getItem(storageKey) || '') as AdminState; if (!state?.records) throw new Error(); } catch { state = defaultState; }
+    const defaultState: AdminState = { version: 2, records: seed, settings: {}, audit: [{ id: crypto.randomUUID(), message: remoteMode ? 'Panel conectado a PostgreSQL' : 'Panel local inicializado', at: new Date().toISOString() }] };
+    let state: AdminState = structuredClone(defaultState);
+    if (!remoteMode) {
+      try { state = JSON.parse(localStorage.getItem(storageKey) || '') as AdminState; if (!state?.records) throw new Error(); } catch { state = structuredClone(defaultState); }
+    }
 
     const $ = <T extends Element>(selector: string) => app.querySelector<T>(selector);
     const $$ = <T extends Element>(selector: string) => [...app.querySelectorAll<T>(selector)];
@@ -136,12 +146,23 @@ const initialRecords = [
     const toast = $('#admin-toast') as HTMLElement;
 
     const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char] || char);
-    const persist = (message?: string) => {
-      localStorage.setItem(storageKey, JSON.stringify(state));
+    const persist = async (message?: string) => {
       const indicator = $('#save-indicator');
-      if (indicator) { indicator.textContent = 'Guardando…'; setTimeout(() => indicator.textContent = 'Todo guardado', 350); }
-      if (message) showToast(message);
-      renderAll();
+      if (indicator) indicator.textContent = 'Guardando…';
+      try {
+        if (remoteMode) {
+          const response = await fetch('/api/admin/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) });
+          if (!response.ok) throw new Error((await response.json()).error || 'No se pudo guardar');
+        } else {
+          localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+        if (indicator) indicator.textContent = 'Todo guardado';
+        if (message) showToast(message);
+        renderAll();
+      } catch (error) {
+        if (indicator) indicator.textContent = 'Error al guardar';
+        showToast(error instanceof Error ? error.message : 'No se pudo guardar');
+      }
     };
     const addAudit = (message: string) => { state.audit.unshift({ id: crypto.randomUUID(), message, at: new Date().toISOString() }); state.audit = state.audit.slice(0, 60); };
     const showToast = (message: string) => { toast.textContent = message; toast.classList.add('is-visible'); setTimeout(() => toast.classList.remove('is-visible'), 2400); };
@@ -188,7 +209,7 @@ const initialRecords = [
 
     function renderTable() {
       const records = filteredRecords();
-      tableBody.innerHTML = records.map((item) => `<tr><td><div class="content-name">${item.imageData ? `<img src="${item.imageData}" alt="" />` : ''}<div><strong>${escapeHtml(item.title)}</strong><small>/${escapeHtml(item.slug)}/</small></div></div></td><td>${labels[item.collection] || escapeHtml(item.collection)}</td><td><span class="locale-pill">${escapeHtml(item.locale.toUpperCase())}</span></td><td><span class="status-pill status-${escapeHtml(item.status)}">${statuses[item.status] || escapeHtml(item.status)}</span></td><td>${formatDate(item.updatedAt)}</td><td><div class="row-actions"><button type="button" data-edit="${escapeHtml(item.id)}">Editar</button><button type="button" data-duplicate="${escapeHtml(item.id)}">Duplicar</button><button type="button" data-delete="${escapeHtml(item.id)}">Eliminar</button></div></td></tr>`).join('');
+      tableBody.innerHTML = records.map((item) => `<tr><td><div class="content-name">${item.imageData ? `<img src="${escapeHtml(item.imageData)}" alt="" />` : ''}<div><strong>${escapeHtml(item.title)}</strong><small>/${escapeHtml(item.slug)}/</small></div></div></td><td>${labels[item.collection] || escapeHtml(item.collection)}</td><td><span class="locale-pill">${escapeHtml(item.locale.toUpperCase())}</span></td><td><span class="status-pill status-${escapeHtml(item.status)}">${statuses[item.status] || escapeHtml(item.status)}</span></td><td>${formatDate(item.updatedAt)}</td><td><div class="row-actions"><button type="button" data-edit="${escapeHtml(item.id)}">Editar</button><button type="button" data-duplicate="${escapeHtml(item.id)}">Duplicar</button><button type="button" data-delete="${escapeHtml(item.id)}">Eliminar</button></div></td></tr>`).join('');
       const empty = $('#empty-state') as HTMLElement;
       empty.hidden = records.length > 0;
     }
@@ -243,13 +264,24 @@ const initialRecords = [
       let imageData = data.imageData || existing?.imageData || '';
       const file = fileInput.files?.[0];
       if (file) {
-        if (file.size > 1024 * 1024) { showToast('La imagen supera el máximo local de 1 MB'); return; }
-        imageData = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); });
+        if (remoteMode) {
+          const upload = new FormData();
+          upload.set('file', file);
+          upload.set('altText', data.altText || '');
+          const response = await fetch('/api/admin/media', { method: 'POST', body: upload });
+          const result = await response.json();
+          if (!response.ok) { showToast(result.error || 'No se pudo subir la imagen'); return; }
+          imageData = result.url;
+          data.imageKey = result.key;
+        } else {
+          if (file.size > 1024 * 1024) { showToast('La imagen supera el máximo local de 1 MB'); return; }
+          imageData = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); });
+        }
       }
-      const record: RecordItem = { id: data.id || crypto.randomUUID(), collection: data.collection, locale: data.locale, status: data.status, title: data.title.trim(), slug: data.slug.trim().toLowerCase(), summary: data.summary.trim(), notes: data.notes.trim(), altText: data.altText.trim(), imageData, updatedAt: new Date().toISOString() };
+      const record: RecordItem = { id: data.id || crypto.randomUUID(), collection: data.collection, locale: data.locale, status: data.status, title: data.title.trim(), slug: data.slug.trim().toLowerCase(), summary: data.summary.trim(), body: data.body.trim(), notes: data.notes.trim(), author: data.author.trim(), medicalReviewer: data.medicalReviewer.trim(), reviewDate: data.reviewDate, sources: data.sources.trim(), altText: data.altText.trim(), imageData, imageKey: data.imageKey || existing?.imageKey || '', updatedAt: new Date().toISOString() };
       if (existing) Object.assign(existing, record); else state.records.unshift(record);
       addAudit(`${existing ? 'Actualizado' : 'Creado'}: ${record.title}`);
-      dialog.close(); persist('Contenido guardado');
+      dialog.close(); await persist('Contenido guardado');
     });
 
     settingsForm.addEventListener('submit', (event) => {
@@ -261,7 +293,7 @@ const initialRecords = [
     });
 
     ['content-search','collection-filter','status-filter'].forEach((id) => $(`#${id}`)?.addEventListener('input', renderTable));
-    $('#clear-audit')?.addEventListener('click', () => { if (confirm('¿Limpiar el registro de actividad local?')) { state.audit = []; persist('Historial limpiado'); } });
+    $('#clear-audit')?.addEventListener('click', () => { if (confirm(remoteMode ? '¿Limpiar el registro de actividad?' : '¿Limpiar el registro de actividad local?')) { state.audit = []; persist('Historial limpiado'); } });
     $('#export-data')?.addEventListener('click', () => {
       const blob = new Blob([JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `dr-ronald-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(url); addAudit('Respaldo exportado'); persist('Respaldo descargado');
@@ -270,8 +302,23 @@ const initialRecords = [
       const input = event.currentTarget as HTMLInputElement; const file = input.files?.[0]; if (!file) return;
       try { const imported = JSON.parse(await file.text()) as AdminState; if (!Array.isArray(imported.records) || typeof imported.settings !== 'object') throw new Error(); state = imported; addAudit('Respaldo importado'); persist('Respaldo restaurado'); } catch { showToast('El archivo no es un respaldo válido'); } finally { input.value = ''; }
     });
-    $('#reset-data')?.addEventListener('click', () => { if (confirm('¿Restablecer todos los datos locales? Exporta una copia antes si deseas conservarlos.')) { state = structuredClone(defaultState); persist('Datos iniciales restaurados'); } });
+    $('#reset-data')?.addEventListener('click', () => { if (confirm(remoteMode ? '¿Reemplazar el contenido de PostgreSQL por los datos iniciales? Exporta una copia antes.' : '¿Restablecer todos los datos locales? Exporta una copia antes si deseas conservarlos.')) { state = structuredClone(defaultState); persist('Datos iniciales restaurados'); } });
     window.addEventListener('hashchange', () => switchView(location.hash.slice(1) || 'dashboard'));
-    switchView(location.hash.slice(1) || 'dashboard'); renderAll();
+    const initialize = async () => {
+      if (remoteMode) {
+        try {
+          const response = await fetch('/api/admin/state');
+          if (!response.ok) throw new Error('No se pudo conectar con PostgreSQL');
+          const remoteState = await response.json() as AdminState;
+          state = remoteState.records.length ? remoteState : structuredClone(defaultState);
+          if (!remoteState.records.length) await persist('Contenido inicial importado a PostgreSQL');
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : 'Error de conexión');
+        }
+      }
+      switchView(location.hash.slice(1) || 'dashboard');
+      renderAll();
+    };
+    void initialize();
   }
 </script>

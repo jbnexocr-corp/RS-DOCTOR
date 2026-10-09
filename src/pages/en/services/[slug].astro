@@ -6,6 +6,7 @@ import { serviceDetails } from '@/data/serviceDetails';
 export function getStaticPaths() {
   return serviceDetails.en.map((service) => ({ params: { slug: service.slug }, props: { service } }));
 }
+export const prerender = true;
 const { service } = Astro.props;
 const pathname = `/en/services/${service.slug}/`;
 const alternatePathname = `/es/servicios/${service.alternateSlug}/`;

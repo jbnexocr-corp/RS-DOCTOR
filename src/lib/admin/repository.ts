@@ -8,9 +8,15 @@ export interface EditorialRecord {
   title: string;
   slug: string;
   summary: string;
+  body?: string;
   notes: string;
+  author?: string;
+  medicalReviewer?: string;
+  reviewDate?: string;
+  sources?: string;
   altText?: string;
   imageData?: string;
+  imageKey?: string;
   updatedAt: string;
 }
 

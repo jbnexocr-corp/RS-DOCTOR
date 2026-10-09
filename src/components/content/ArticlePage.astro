@@ -1,0 +1,62 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { getPublishedArticle } from '@/lib/server/content';
+import { homeContent } from '@/data/home';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteHeader from '@/components/navigation/SiteHeader.astro';
+import SiteFooter from '@/components/footer/SiteFooter.astro';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs.astro';
+
+interface Props { locale: Locale; slug: string }
+const { locale, slug } = Astro.props;
+const article = await getPublishedArticle(locale, slug);
+const shell = homeContent[locale];
+const indexPath = locale === 'es' ? '/es/articulos/' : '/en/articles/';
+const pathname = `${indexPath}${slug}/`;
+if (!article) Astro.response.status = 404;
+const sources = article?.sources?.split('\n').map((source) => source.trim()).filter(Boolean) ?? [];
+const paragraphs = article?.body?.split(/\n{2,}/).map((paragraph) => paragraph.trim()).filter(Boolean) ?? [];
+---
+
+<BaseLayout
+  {locale}
+  title={article ? `${article.title} | Dr. Ronald Salazar` : locale === 'es' ? 'Artículo no encontrado' : 'Article not found'}
+  description={article?.summary ?? (locale === 'es' ? 'El artículo solicitado no está disponible.' : 'The requested article is unavailable.')}
+  {pathname}
+  alternatePathname={locale === 'es' ? '/en/articles/' : '/es/articulos/'}
+  skipText={locale === 'es' ? 'Saltar al contenido' : 'Skip to content'}
+  noindex={!article}
+>
+  <SiteHeader {locale} content={shell.nav} currentPath={indexPath} alternateHref={locale === 'es' ? '/en/articles/' : '/es/articulos/'} />
+  <main id="main-content">
+    <div class="inner-breadcrumb-shell page-shell"><Breadcrumbs {locale} title={article?.title ?? (locale === 'es' ? 'No encontrado' : 'Not found')} {pathname} /></div>
+    {article ? (
+      <article class="article-detail">
+        <header class="article-detail-header page-shell">
+          <p class="eyebrow">{locale === 'es' ? 'Artículo revisado' : 'Reviewed article'}</p>
+          <h1>{article.title}</h1>
+          <p class="article-lead">{article.summary}</p>
+          <dl class="article-byline">
+            {article.author && <div><dt>{locale === 'es' ? 'Autor' : 'Author'}</dt><dd>{article.author}</dd></div>}
+            {article.medicalReviewer && <div><dt>{locale === 'es' ? 'Revisión médica' : 'Medical review'}</dt><dd>{article.medicalReviewer}</dd></div>}
+            {article.reviewDate && <div><dt>{locale === 'es' ? 'Fecha de revisión' : 'Review date'}</dt><dd>{article.reviewDate}</dd></div>}
+          </dl>
+        </header>
+        {article.imageData && <figure class="article-cover page-shell"><img src={article.imageData} alt={article.altText || ''} /></figure>}
+        <div class="article-body page-shell">
+          {paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+          {sources.length > 0 && (
+            <section aria-labelledby="article-sources-title">
+              <h2 id="article-sources-title">{locale === 'es' ? 'Fuentes' : 'Sources'}</h2>
+              <ol>{sources.map((source) => <li>{source.startsWith('http') ? <a href={source} rel="noopener noreferrer">{source}</a> : source}</li>)}</ol>
+            </section>
+          )}
+          <aside><strong>{locale === 'es' ? 'Información general' : 'General information'}</strong><p>{locale === 'es' ? 'Este contenido no sustituye una valoración médica individual.' : 'This content does not replace an individual medical evaluation.'}</p></aside>
+        </div>
+      </article>
+    ) : (
+      <section class="error-page page-shell"><h1>{locale === 'es' ? 'Artículo no encontrado' : 'Article not found'}</h1><a class="text-link" href={indexPath}>{locale === 'es' ? 'Volver a artículos' : 'Back to articles'}</a></section>
+    )}
+  </main>
+  <SiteFooter {locale} content={shell.footer} nav={shell.nav} alternateHref={locale === 'es' ? '/en/articles/' : '/es/articulos/'} />
+</BaseLayout>

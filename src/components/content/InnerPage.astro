@@ -14,6 +14,7 @@ import { placeholderEnd, placeholderStart } from '@/lib/placeholders';
 import { serviceDetails } from '@/data/serviceDetails';
 import SocialLinks from '@/components/navigation/SocialLinks.astro';
 import ContactChannels from '@/components/contact/ContactChannels.astro';
+import { listRecords } from '@/lib/server/content';
 
 interface Props { locale: Locale; page: InnerPageContent; pathname: string }
 const { locale, page, pathname } = Astro.props;
@@ -26,6 +27,9 @@ const imageAlt = locale === 'es'
 const reviewLabel = locale === 'es' ? 'Contenido provisional pendiente de revisión y aprobación' : 'Provisional content pending review and approval';
 const alternateHref = `/${locale === 'es' ? 'en' : 'es'}/${page.alternateSlug}/`;
 const pageServices = page.kind === 'pillar' ? serviceDetails[locale].filter((service) => service.pillarSlug === page.slug) : [];
+const publishedArticles = page.kind === 'articles'
+  ? await listRecords({ collection: 'articles', locale, status: 'published' })
+  : [];
 ---
 
 <SiteHeader {locale} content={shell.nav} currentPath={pathname} {alternateHref} />
@@ -133,8 +137,28 @@ const pageServices = page.kind === 'pillar' ? serviceDetails[locale].filter((ser
     <section class="empty-library section">
       <div class="page-shell">
         <p class="eyebrow">{locale === 'es' ? 'Estado editorial' : 'Editorial status'}</p>
-        <h2>{locale === 'es' ? 'La biblioteca se publicará con revisión documentada.' : 'The library will be published with documented review.'}</h2>
-        <p>{locale === 'es' ? 'No mostramos artículos de relleno ni contenido médico sin responsable y fuentes.' : 'We do not display filler articles or medical content without an accountable reviewer and sources.'}</p>
+        {publishedArticles.length ? (
+          <>
+            <h2>{locale === 'es' ? 'Información publicada con revisión documentada.' : 'Information published with documented review.'}</h2>
+            <div class="article-library-grid">
+              {publishedArticles.map((article) => (
+                <article>
+                  {article.imageData && <img src={article.imageData} alt={article.altText || ''} loading="lazy" />}
+                  <div>
+                    <p class="article-meta">{article.reviewDate ? `${locale === 'es' ? 'Revisado' : 'Reviewed'} ${article.reviewDate}` : locale === 'es' ? 'Revisión documentada' : 'Documented review'}</p>
+                    <h3><a href={`/${locale}/${locale === 'es' ? 'articulos' : 'articles'}/${article.slug}/`}>{article.title}</a></h3>
+                    <p>{article.summary}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2>{locale === 'es' ? 'La biblioteca se publicará con revisión documentada.' : 'The library will be published with documented review.'}</h2>
+            <p>{locale === 'es' ? 'No mostramos artículos de relleno ni contenido médico sin responsable y fuentes.' : 'We do not display filler articles or medical content without an accountable reviewer and sources.'}</p>
+          </>
+        )}
       </div>
     </section>
   )}
@@ -157,7 +181,7 @@ const pageServices = page.kind === 'pillar' ? serviceDetails[locale].filter((ser
     </section>
   )}
 
-  {page.pending && (
+  {page.pending && !(page.kind === 'articles' && publishedArticles.length > 0) && (
     <aside class="pending-banner" aria-label={locale === 'es' ? 'Información pendiente' : 'Pending information'}>
       <div class="page-shell"><strong>{placeholderEnd(locale === 'es' ? 'Contenido provisional' : 'Provisional content', locale)}</strong><p>{page.pending.toLocaleUpperCase(locale)}</p></div>
     </aside>
