@@ -33,6 +33,7 @@ Copiar `.env.example` a `.env` para desarrollo. En Railway se deben inyectar `DA
 - Panel CRUD en `/admin/`, protegido en producción mediante credenciales.
 - Artículos publicados desde PostgreSQL en `/es/articulos/{slug}/` y `/en/articles/{slug}/`.
 - Imágenes guardadas en Railway Bucket; PostgreSQL conserva URLs y metadatos.
+- Caché de contenido público, imágenes WebP optimizadas, streaming desde el Bucket y límites de concurrencia apropiados para Railway.
 - Borradores interiores con `noindex` hasta recibir aprobación médica, legal y operativa.
 - Canal principal de contacto por WhatsApp, sin almacenar información clínica en el CMS.
 

@@ -20,9 +20,11 @@
   "dependencies": {
     "@astrojs/node": "^11.1.7",
     "@aws-sdk/client-s3": "^3.1149.0",
+    "@smithy/node-http-handler": "^4.12.1",
     "astro": "latest",
     "gsap": "^3.15.0",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@astrojs/check": "latest",

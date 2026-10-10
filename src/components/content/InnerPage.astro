@@ -14,7 +14,7 @@ import { placeholderEnd, placeholderStart } from '@/lib/placeholders';
 import { serviceDetails } from '@/data/serviceDetails';
 import SocialLinks from '@/components/navigation/SocialLinks.astro';
 import ContactChannels from '@/components/contact/ContactChannels.astro';
-import { listRecords } from '@/lib/server/content';
+import { listPublishedArticles } from '@/lib/server/content';
 
 interface Props { locale: Locale; page: InnerPageContent; pathname: string }
 const { locale, page, pathname } = Astro.props;
@@ -27,9 +27,12 @@ const imageAlt = locale === 'es'
 const reviewLabel = locale === 'es' ? 'Contenido provisional pendiente de revisión y aprobación' : 'Provisional content pending review and approval';
 const alternateHref = `/${locale === 'es' ? 'en' : 'es'}/${page.alternateSlug}/`;
 const pageServices = page.kind === 'pillar' ? serviceDetails[locale].filter((service) => service.pillarSlug === page.slug) : [];
-const publishedArticles = page.kind === 'articles'
-  ? await listRecords({ collection: 'articles', locale, status: 'published' })
-  : [];
+let publishedArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
+if (page.kind === 'articles') {
+  Astro.response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  try { publishedArticles = await listPublishedArticles(locale); }
+  catch { Astro.response.headers.set('Retry-After', '30'); }
+}
 ---
 
 <SiteHeader {locale} content={shell.nav} currentPath={pathname} {alternateHref} />

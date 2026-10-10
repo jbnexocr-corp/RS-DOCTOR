@@ -144,6 +144,12 @@ const initialRecords = [
     const form = $('#record-form') as HTMLFormElement;
     const settingsForm = $('#settings-form') as HTMLFormElement;
     const toast = $('#admin-toast') as HTMLElement;
+    const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 12_000) => {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+      try { return await fetch(input, { ...init, signal: controller.signal }); }
+      finally { window.clearTimeout(timer); }
+    };
 
     const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char] || char);
     const persist = async (message?: string) => {
@@ -151,7 +157,7 @@ const initialRecords = [
       if (indicator) indicator.textContent = 'Guardando…';
       try {
         if (remoteMode) {
-          const response = await fetch('/api/admin/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) });
+          const response = await fetchWithTimeout('/api/admin/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) });
           if (!response.ok) throw new Error((await response.json()).error || 'No se pudo guardar');
         } else {
           localStorage.setItem(storageKey, JSON.stringify(state));
@@ -268,7 +274,7 @@ const initialRecords = [
           const upload = new FormData();
           upload.set('file', file);
           upload.set('altText', data.altText || '');
-          const response = await fetch('/api/admin/media', { method: 'POST', body: upload });
+          const response = await fetchWithTimeout('/api/admin/media', { method: 'POST', body: upload }, 30_000);
           const result = await response.json();
           if (!response.ok) { showToast(result.error || 'No se pudo subir la imagen'); return; }
           imageData = result.url;
@@ -307,7 +313,7 @@ const initialRecords = [
     const initialize = async () => {
       if (remoteMode) {
         try {
-          const response = await fetch('/api/admin/state');
+          const response = await fetchWithTimeout('/api/admin/state');
           if (!response.ok) throw new Error('No se pudo conectar con PostgreSQL');
           const remoteState = await response.json() as AdminState;
           state = remoteState.records.length ? remoteState : structuredClone(defaultState);

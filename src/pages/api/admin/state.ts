@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, hasDatabase } from '@/lib/server/db';
-import { listRecords } from '@/lib/server/content';
+import { invalidateContentCache, listRecords } from '@/lib/server/content';
 import { assertSameOrigin, normalizeRecord } from '@/lib/server/validation';
 
 export const GET: APIRoute = async () => {
@@ -27,31 +27,41 @@ export const PUT: APIRoute = async ({ request }) => {
     const sql = db();
     await sql.begin(async (transaction) => {
       await transaction`DELETE FROM content_records`;
-      for (const record of records) {
-        await transaction`
-          INSERT INTO content_records (
-            id, collection, locale, status, title, slug, summary, body, notes, author,
-            medical_reviewer, review_date, sources, alt_text, image_url, image_key, updated_at
-          ) VALUES (
-            ${record.id}, ${record.collection}, ${record.locale}, ${record.status}, ${record.title}, ${record.slug},
-            ${record.summary}, ${record.body ?? ''}, ${record.notes}, ${record.author ?? ''},
-            ${record.medicalReviewer ?? ''}, ${record.reviewDate || null}, ${record.sources ?? ''},
-            ${record.altText ?? ''}, ${record.imageData ?? ''}, ${record.imageKey ?? ''}, now()
-          )
-        `;
+      if (records.length) {
+        const rows = records.map((record) => ({
+          id: record.id,
+          collection: record.collection,
+          locale: record.locale,
+          status: record.status,
+          title: record.title,
+          slug: record.slug,
+          summary: record.summary,
+          body: record.body ?? '',
+          notes: record.notes,
+          author: record.author ?? '',
+          medical_reviewer: record.medicalReviewer ?? '',
+          review_date: record.reviewDate || null,
+          sources: record.sources ?? '',
+          alt_text: record.altText ?? '',
+          image_url: record.imageData ?? '',
+          image_key: record.imageKey ?? '',
+          updated_at: new Date(),
+        }));
+        await transaction`INSERT INTO content_records ${transaction(rows, 'id', 'collection', 'locale', 'status', 'title', 'slug', 'summary', 'body', 'notes', 'author', 'medical_reviewer', 'review_date', 'sources', 'alt_text', 'image_url', 'image_key', 'updated_at')}`;
       }
       await transaction`DELETE FROM site_settings`;
       for (const [key, value] of Object.entries(settings)) {
         await transaction`INSERT INTO site_settings (key, value) VALUES (${key}, ${transaction.json(value)})`;
       }
       await transaction`DELETE FROM audit_log`;
-      for (const item of audit) {
-        const id = String(item.id || crypto.randomUUID());
-        const message = String(item.message || '').slice(0, 2_000);
-        const at = item.at ? new Date(String(item.at)) : new Date();
-        if (message) await transaction`INSERT INTO audit_log (id, message, created_at) VALUES (${id}, ${message}, ${at})`;
+      const auditRows = audit
+        .map((item) => ({ id: String(item.id || crypto.randomUUID()), message: String(item.message || '').slice(0, 2_000), created_at: item.at ? new Date(String(item.at)) : new Date() }))
+        .filter((item) => item.message);
+      if (auditRows.length) {
+        await transaction`INSERT INTO audit_log ${transaction(auditRows, 'id', 'message', 'created_at')}`;
       }
     });
+    invalidateContentCache();
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : 'Unable to save state' }, { status: 400 });

@@ -7,12 +7,13 @@ export const GET: APIRoute = async ({ params }) => {
     if (!key || key.includes('..')) return new Response('Not found', { status: 404 });
     const object = await readMedia(key);
     if (!object.Body) return new Response('Not found', { status: 404 });
-    const bytes = await object.Body.transformToByteArray();
-    const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    const body = object.Body.transformToWebStream();
     return new Response(body, {
       headers: {
         'Content-Type': object.ContentType || 'application/octet-stream',
-        'Content-Length': String(bytes.byteLength),
+        ...(object.ContentLength ? { 'Content-Length': String(object.ContentLength) } : {}),
+        ...(object.ETag ? { ETag: object.ETag } : {}),
+        ...(object.LastModified ? { 'Last-Modified': object.LastModified.toUTCString() } : {}),
         'Cache-Control': object.CacheControl || 'public, max-age=31536000, immutable',
         'X-Content-Type-Options': 'nosniff',
       },

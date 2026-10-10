@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
     const uploaded = await uploadMedia(file);
     const id = crypto.randomUUID();
     if (hasDatabase()) {
-      await db()`INSERT INTO media_assets (id, object_key, url, filename, content_type, size_bytes, alt_text) VALUES (${id}, ${uploaded.key}, ${uploaded.url}, ${file.name}, ${file.type}, ${file.size}, ${altText})`;
+      await db()`INSERT INTO media_assets (id, object_key, url, filename, content_type, size_bytes, alt_text) VALUES (${id}, ${uploaded.key}, ${uploaded.url}, ${file.name}, ${uploaded.contentType}, ${uploaded.size}, ${altText})`;
     }
     return Response.json({ id, ...uploaded, filename: file.name, altText }, { status: 201 });
   } catch (error) {

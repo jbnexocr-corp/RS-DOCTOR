@@ -123,10 +123,17 @@ test('admin supports local CRUD and persists a new record', async ({ page }) => 
   await page.goto('/admin/');
   await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible();
   await page.getByRole('button', { name: 'Nuevo contenido' }).click();
-  await page.getByLabel('Título').fill('Artículo de prueba editorial');
-  await page.getByLabel('Slug').fill('articulo-prueba-editorial');
-  await page.getByLabel('Resumen').fill('Registro de prueba del flujo CRUD local.');
+  const dialog = page.locator('#record-dialog');
+  const title = dialog.locator('input[name="title"]');
+  const slug = dialog.locator('input[name="slug"]');
+  const summary = dialog.locator('textarea[name="summary"]');
+  await title.fill('Artículo de prueba editorial');
+  await slug.fill('articulo-prueba-editorial');
+  await summary.fill('Registro de prueba del flujo CRUD local.');
+  await expect(title).toHaveValue('Artículo de prueba editorial');
+  await expect(slug).toHaveValue('articulo-prueba-editorial');
   await page.getByRole('button', { name: 'Guardar registro' }).click();
+  await expect(dialog).not.toHaveAttribute('open', '');
   await page.getByRole('button', { name: 'Contenido', exact: true }).click();
   await expect(page.getByRole('cell', { name: /Artículo de prueba editorial/ })).toBeVisible();
   await page.reload();
@@ -137,6 +144,7 @@ test('admin supports local CRUD and persists a new record', async ({ page }) => 
 test('deployment endpoints expose health, robots and dynamic sitemap', async ({ request }) => {
   const health = await request.get('/api/health/');
   expect(health.status()).toBe(200);
+  expect(health.headers()['cache-control']).toBe('no-store');
   expect(await health.json()).toMatchObject({
     ok: true,
     database: 'not-configured',
@@ -152,6 +160,14 @@ test('deployment endpoints expose health, robots and dynamic sitemap', async ({ 
   const sitemapXml = await sitemap.text();
   expect(sitemapXml).toContain('/es/');
   expect(sitemapXml).toContain('/es/articulos/');
+});
+
+test('public pages and large media expose bounded cache policies', async ({ request }) => {
+  const home = await request.get('/es/');
+  expect(home.headers()['cache-control']).toContain('max-age=300');
+
+  const articles = await request.get('/es/articulos/');
+  expect(articles.headers()['cache-control']).toContain('max-age=60');
 });
 
 test('an unpublished article slug returns 404', async ({ request }) => {

@@ -1,4 +1,7 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import { Agent } from 'node:https';
+import sharp from 'sharp';
 
 let storageClient: S3Client | undefined;
 
@@ -12,6 +15,8 @@ function storage() {
     endpoint: process.env.ENDPOINT,
     region: process.env.REGION || 'auto',
     forcePathStyle: process.env.BUCKET_FORCE_PATH_STYLE === 'true',
+    maxAttempts: 2,
+    requestHandler: new NodeHttpHandler({ connectionTimeout: 3_000, requestTimeout: 15_000, httpsAgent: new Agent({ keepAlive: true, maxSockets: 16 }) }),
     credentials: {
       accessKeyId: process.env.ACCESS_KEY_ID!,
       secretAccessKey: process.env.SECRET_ACCESS_KEY!,
@@ -21,16 +26,21 @@ function storage() {
 }
 
 export async function uploadMedia(file: File) {
-  const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
-  const key = `media/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
+  const input = Buffer.from(await file.arrayBuffer());
+  const optimized = await sharp(input, { limitInputPixels: 40_000_000 })
+    .rotate()
+    .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 82, effort: 4 })
+    .toBuffer();
+  const key = `media/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.webp`;
   await storage().send(new PutObjectCommand({
     Bucket: process.env.BUCKET!,
     Key: key,
-    Body: new Uint8Array(await file.arrayBuffer()),
-    ContentType: file.type,
+    Body: optimized,
+    ContentType: 'image/webp',
     CacheControl: 'public, max-age=31536000, immutable',
   }));
-  return { key, url: `/api/media/${key}` };
+  return { key, url: `/api/media/${key}`, size: optimized.byteLength, contentType: 'image/webp' };
 }
 
 export async function readMedia(key: string) {
