@@ -93,8 +93,8 @@ html[data-motion='enhanced'] .hero-image img { animation: hero-cinema 1.8s cubic
     transition-delay: calc(var(--motion-order) * 32ms);
   }
 
-  html[data-motion='enhanced'] .motion-from-left:not(.motion-heading):not(.motion-media) { transform: translate3d(-1.5rem, 1.7rem, 0) rotate(-.35deg); }
-  html[data-motion='enhanced'] .motion-from-right:not(.motion-heading):not(.motion-media) { transform: translate3d(1.5rem, 1.7rem, 0) rotate(.35deg); }
+  html[data-motion='enhanced'] .motion-from-left:not(.motion-heading):not(.motion-media) { transform: translate3d(-.85rem, 1.7rem, 0) rotate(-.2deg); }
+  html[data-motion='enhanced'] .motion-from-right:not(.motion-heading):not(.motion-media) { transform: translate3d(.85rem, 1.7rem, 0) rotate(.2deg); }
   html[data-motion='enhanced'] .motion-from-left.motion-visible,
   html[data-motion='enhanced'] .motion-from-right.motion-visible { transform: translate3d(0,0,0) rotate(0); }
 
