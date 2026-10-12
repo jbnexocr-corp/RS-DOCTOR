@@ -54,19 +54,24 @@
     elements.forEach((element) => observer.observe(element));
 
     const parallaxMedia = [...document.querySelectorAll('main figure img')];
+    const activeParallax = new Set();
+    const parallaxObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) activeParallax.add(entry.target);
+        else activeParallax.delete(entry.target);
+      });
+    }, { rootMargin: '20% 0px' });
+    parallaxMedia.forEach((image) => parallaxObserver.observe(image));
+
     let ticking = false;
     const updateParallax = () => {
       const viewport = window.innerHeight;
       const scrollable = document.documentElement.scrollHeight - viewport;
       progress.style.setProperty('--reading-progress', String(scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 0));
-      elements.forEach((element) => {
-        if (element.getBoundingClientRect().top < viewport * .94) element.classList.add('motion-visible');
-      });
-      parallaxMedia.forEach((image) => {
+      activeParallax.forEach((image) => {
         const rect = image.getBoundingClientRect();
-        if (rect.bottom < 0 || rect.top > viewport) return;
-        const progress = (rect.top + rect.height / 2 - viewport / 2) / viewport;
-        image.style.setProperty('--parallax-y', `${Math.max(-14, Math.min(14, progress * -24))}px`);
+        const mediaProgress = (rect.top + rect.height / 2 - viewport / 2) / viewport;
+        image.style.setProperty('--parallax-y', `${Math.max(-14, Math.min(14, mediaProgress * -24))}px`);
       });
       ticking = false;
     };

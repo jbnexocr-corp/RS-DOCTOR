@@ -10,9 +10,10 @@ interface Props {
   content: HomeContent['hero'];
   poster: ImageMetadata;
   videoSrc: string;
+  mobileVideoSrc: string;
 }
 
-const { locale, content, poster, videoSrc } = Astro.props;
+const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
 ---
 
 <section class="scroll-hero" data-scroll-hero data-motion-ignore aria-labelledby="hero-title">
@@ -37,9 +38,9 @@ const { locale, content, poster, videoSrc } = Astro.props;
         tabindex="-1"
         poster={poster.src}
         data-scroll-hero-video
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
+        data-mobile-video-src={mobileVideoSrc}
+        data-desktop-video-src={videoSrc}
+      ></video>
       <span class="scroll-hero-scrim"></span>
       <span class="scroll-hero-transition"></span>
     </div>
@@ -104,6 +105,12 @@ const { locale, content, poster, videoSrc } = Astro.props;
       let seekFrame = 0;
       let targetTime = 0;
       let viewportWidth = window.innerWidth;
+      let videoDuration = 0;
+      let videoReady = false;
+      let fallbackApplied = false;
+      let activationStarted = false;
+      const playhead = { progress: 0 };
+      const sourceFrameDuration = 1 / 24;
 
       const destroyTimeline = () => {
         timeline?.scrollTrigger?.kill();
@@ -111,29 +118,22 @@ const { locale, content, poster, videoSrc } = Astro.props;
         timeline = undefined;
       };
 
-      const buildTimeline = (duration?: number) => {
-        if (timeline) return;
-        const hasVideoMotion = typeof duration === 'number' && Number.isFinite(duration) && duration > 0;
-        root.dataset.heroState = hasVideoMotion ? 'ready' : 'fallback';
+      const applyLatestFrame = () => {
+        seekFrame = 0;
+        if (!videoReady || !video || video.seeking || video.readyState < 2 || videoDuration <= 0 || Math.abs(video.currentTime - targetTime) < sourceFrameDuration * 0.45) return;
+        try { video.currentTime = targetTime; } catch { showFallback(); }
+      };
 
-        const playhead = { time: 0 };
-        const applyLatestFrame = () => {
-          seekFrame = 0;
-          if (!hasVideoMotion || !video || video.seeking || video.readyState < 2 || Math.abs(video.currentTime - targetTime) < 0.012) return;
-          try { video.currentTime = targetTime; } catch { showFallback(); }
-        };
-        const queueFrame = (time: number) => {
-          targetTime = time;
-          if (!seekFrame) seekFrame = requestAnimationFrame(applyLatestFrame);
-        };
+      const queueCurrentFrame = () => {
+        if (!videoReady || videoDuration <= 0) return;
+        const rawTime = playhead.progress * videoDuration;
+        targetTime = Math.min(Math.max(0, videoDuration - 0.015), Math.round(rawTime / sourceFrameDuration) * sourceFrameDuration);
+        if (!seekFrame) seekFrame = requestAnimationFrame(applyLatestFrame);
+      };
 
-        if (hasVideoMotion && video) {
-          video.addEventListener('seeked', () => {
-            if (Math.abs(video.currentTime - targetTime) > 0.02 && !seekFrame) seekFrame = requestAnimationFrame(applyLatestFrame);
-          });
-          video.addEventListener('loadeddata', () => queueFrame(targetTime));
-          video.addEventListener('canplay', () => queueFrame(targetTime));
-        }
+      const buildTimeline = () => {
+        if (timeline || !stage || !copy || !secondaryCopy || !transition || !poster) return;
+        root.dataset.heroState = 'loading';
 
         timeline = gsap.timeline({
           defaults: { ease: 'none' },
@@ -143,21 +143,18 @@ const { locale, content, poster, videoSrc } = Astro.props;
             end: () => `+=${Math.round(window.innerHeight * (mobileQuery.matches ? 1.45 : 1.9))}`,
             pin: stage,
             pinSpacing: true,
-            scrub: mobileQuery.matches ? 0.1 : 0.12,
+            scrub: mobileQuery.matches ? 0.08 : 0.1,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
         });
 
-        if (hasVideoMotion) {
-          timeline.to(playhead, {
-            time: Math.max(0, duration - 0.015),
-            duration: 1,
-            onUpdate: () => queueFrame(playhead.time),
-          }, 0);
-        }
-
         timeline
+          .to(playhead, {
+            progress: 1,
+            duration: 1,
+            onUpdate: queueCurrentFrame,
+          }, 0)
           .to(cue, { autoAlpha: 0, duration: 0.18 }, 0.08)
           .to(copy, { autoAlpha: 0, y: -12, duration: 0.1 }, 0.4)
           .to(secondaryCopy, { autoAlpha: 1, y: 0, duration: 0.1 }, 0.5)
@@ -169,76 +166,73 @@ const { locale, content, poster, videoSrc } = Astro.props;
       };
 
       const showFallback = () => {
+        if (fallbackApplied) return;
+        fallbackApplied = true;
         window.clearTimeout(loadTimer);
-        destroyTimeline();
+        videoReady = false;
+        root.dataset.heroState = 'fallback';
         if (video) {
           video.pause();
           video.removeAttribute('src');
           video.querySelectorAll('source').forEach((source) => source.remove());
           video.load();
         }
-        if (reducedMotion.matches) root.dataset.heroState = 'fallback';
-        else buildTimeline();
+        if (reducedMotion.matches) destroyTimeline();
       };
 
-      if (!video || !stage || !copy || !secondaryCopy || !transition || !poster || reducedMotion.matches || !video.canPlayType('video/mp4')) {
+      if (!stage || !copy || !secondaryCopy || !transition || !poster) {
+        root.dataset.heroState = 'fallback';
+        return;
+      }
+
+      if (reducedMotion.matches) {
         showFallback();
         return;
       }
 
-      if (saveData) {
-        showFallback();
-        return;
-      }
+      buildTimeline();
 
-      const startVideoTimeline = () => {
-        if (timeline) return;
+      const activateVideo = () => {
+        if (!video || activationStarted || fallbackApplied) return;
+        activationStarted = true;
         window.clearTimeout(loadTimer);
-        video.pause();
-        try {
-          video.currentTime = Math.min(0.01, video.duration);
-        } catch {
-          showFallback();
-          return;
-        }
-
-        buildTimeline(video.duration);
-      };
-
-      const primeAndStart = () => {
-        if (!mobileQuery.matches) {
-          startVideoTimeline();
-          return;
-        }
         let settled = false;
         const finish = () => {
-          if (settled) return;
+          if (settled || fallbackApplied) return;
           settled = true;
           video.pause();
-          startVideoTimeline();
+          videoReady = true;
+          root.dataset.heroState = 'ready';
+          queueCurrentFrame();
         };
+
+        if (!mobileQuery.matches) {
+          finish();
+          return;
+        }
+
         const playAttempt = video.play();
         if (playAttempt) playAttempt.then(finish).catch(finish);
         window.setTimeout(finish, 700);
       };
 
       const onMetadata = () => {
-        if (!Number.isFinite(video.duration) || video.duration <= 0) {
+        if (!video || !Number.isFinite(video.duration) || video.duration <= 0) {
           showFallback();
           return;
         }
-        if (video.readyState >= 2) primeAndStart();
-        else video.addEventListener('loadeddata', primeAndStart, { once: true });
+        videoDuration = video.duration;
+        if (video.readyState >= 2) activateVideo();
+        else video.addEventListener('loadeddata', activateVideo, { once: true });
       };
-      if (video.readyState >= 1) onMetadata();
-      else video.addEventListener('loadedmetadata', onMetadata, { once: true });
-      loadTimer = window.setTimeout(showFallback, 12000);
-      video.load();
 
-      video.addEventListener('error', showFallback, { once: true });
-      reducedMotion.addEventListener('change', (event) => {
+      const onSeeked = () => {
+        if (video && Math.abs(video.currentTime - targetTime) > 0.02 && !seekFrame) seekFrame = requestAnimationFrame(applyLatestFrame);
+      };
+      const onPlayable = () => queueCurrentFrame();
+      const onReducedMotionChange = (event: MediaQueryListEvent) => {
         if (event.matches) showFallback();
-      });
+      };
 
       const refresh = () => {
         const nextWidth = window.innerWidth;
@@ -254,6 +248,25 @@ const { locale, content, poster, videoSrc } = Astro.props;
       };
       window.addEventListener('resize', refresh, { passive: true });
       window.addEventListener('orientationchange', refreshOrientation, { passive: true });
+      reducedMotion.addEventListener('change', onReducedMotionChange);
+
+      if (!video || saveData || !video.canPlayType('video/mp4')) {
+        showFallback();
+      } else {
+        const selectedVideoSrc = mobileQuery.matches ? video.dataset.mobileVideoSrc : video.dataset.desktopVideoSrc;
+        if (!selectedVideoSrc) {
+          showFallback();
+        } else {
+          video.src = selectedVideoSrc;
+          video.addEventListener('loadedmetadata', onMetadata, { once: true });
+          video.addEventListener('seeked', onSeeked);
+          video.addEventListener('loadeddata', onPlayable);
+          video.addEventListener('canplay', onPlayable);
+          video.addEventListener('error', showFallback, { once: true });
+          loadTimer = window.setTimeout(showFallback, 12000);
+          video.load();
+        }
+      }
 
       document.addEventListener('astro:before-swap', () => {
         window.clearTimeout(loadTimer);
@@ -262,6 +275,10 @@ const { locale, content, poster, videoSrc } = Astro.props;
         destroyTimeline();
         window.removeEventListener('resize', refresh);
         window.removeEventListener('orientationchange', refreshOrientation);
+        reducedMotion.removeEventListener('change', onReducedMotionChange);
+        video?.removeEventListener('seeked', onSeeked);
+        video?.removeEventListener('loadeddata', onPlayable);
+        video?.removeEventListener('canplay', onPlayable);
       }, { once: true });
     });
   };

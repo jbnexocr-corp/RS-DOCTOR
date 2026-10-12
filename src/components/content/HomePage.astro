@@ -1,6 +1,7 @@
 ---
 import doctorHeroPoster from '@/assets/images/doctor-hero-video-poster.jpg';
 import doctorHeroVideo from '@/assets/video/dr-ronald-hero-scroll.mp4';
+import doctorHeroMobileVideo from '@/assets/video/dr-ronald-hero-scroll-mobile.mp4';
 import doctorProfile from '@/assets/images/doctor-blue-seated.jpeg';
 import doctorSurgery from '@/assets/images/doctor-operating-room.jpeg';
 import type { HomeContent } from '@/data/home';
@@ -21,7 +22,13 @@ const pillarHrefs = locale === 'es'
 
 <SiteHeader {locale} content={content.nav} />
 <main id="main-content">
-  <ScrollScrubHero {locale} content={content.hero} poster={doctorHeroPoster} videoSrc={doctorHeroVideo} />
+  <ScrollScrubHero
+    {locale}
+    content={content.hero}
+    poster={doctorHeroPoster}
+    videoSrc={doctorHeroVideo}
+    mobileVideoSrc={doctorHeroMobileVideo}
+  />
 
   <section class="services section" id="servicios" aria-labelledby="services-title">
     <div class="section-intro page-shell">

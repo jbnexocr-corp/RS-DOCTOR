@@ -22,6 +22,15 @@ for (const viewport of viewports) {
 
     await expect(hero).toHaveAttribute('data-hero-state', 'ready', { timeout: 15_000 });
 
+    const selectedVideo = await video.evaluate((element: HTMLVideoElement) => ({
+      src: element.currentSrc,
+      width: element.videoWidth,
+      height: element.videoHeight,
+    }));
+    expect(selectedVideo.src).toContain('dr-ronald-hero-scroll-mobile');
+    expect(selectedVideo.width).toBe(720);
+    expect(selectedVideo.height).toBe(1280);
+
     const layout = await page.evaluate(() => ({
       clientWidth: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth,
@@ -50,6 +59,27 @@ for (const viewport of viewports) {
     await expect.poll(async () => transition.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.75);
   });
 }
+
+test('mobile narrative starts before the video finishes loading', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Mobile-only loading coverage.');
+
+  await page.route('**/*.mp4', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 2_500));
+    await route.continue();
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/es/', { waitUntil: 'domcontentloaded' });
+
+  const hero = page.locator('[data-scroll-hero]');
+  const secondaryCopy = hero.locator('[data-scroll-hero-copy-secondary]');
+  await expect(hero).toHaveAttribute('data-hero-state', 'loading');
+  await hero.evaluate((element: HTMLElement) => {
+    const distance = window.innerHeight * 1.45;
+    window.scrollTo({ top: element.offsetTop + (distance * 0.68), behavior: 'instant' });
+  });
+
+  await expect.poll(async () => secondaryCopy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.75);
+});
 
 test('data-saver fallback preserves the pinned mobile narrative', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'Mobile-only fallback coverage.');
