@@ -248,8 +248,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           .to(copy, { autoAlpha: 0, y: -12, duration: 0.1 }, 0.4)
           .to(secondaryCopy, { autoAlpha: 1, y: 0, duration: 0.1 }, 0.5)
           .to(secondaryCopy, { autoAlpha: 0, y: -8, duration: 0.12 }, 0.86)
-          .to(transition, { opacity: 1, duration: 0.16 }, 0.84)
-          .to([canvas, poster], { autoAlpha: 0, duration: 0.12 }, 0.88);
+          .to(transition, { opacity: 1, duration: 0.16 }, 0.84);
 
         requestAnimationFrame(() => ScrollTrigger.refresh());
       };
