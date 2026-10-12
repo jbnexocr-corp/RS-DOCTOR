@@ -97,7 +97,7 @@ const servicePillars = locale === 'es' ? [
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') closeMenu();
     if (event.key !== 'Tab' || toggle?.getAttribute('aria-expanded') !== 'true' || !nav || !toggle) return;
-    const focusable = [toggle, ...nav.querySelectorAll<HTMLElement>('a')];
+    const focusable = [toggle, ...nav.querySelectorAll<HTMLElement>('a, summary')];
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }

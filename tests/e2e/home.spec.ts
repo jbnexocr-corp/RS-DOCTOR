@@ -116,6 +116,11 @@ test('mobile navigation manages state and Escape', async ({ page, isMobile }) =>
   const menu = page.getByRole('button', { name: /Menú/ });
   await menu.click();
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
+  const navigation = page.locator('#primary-navigation');
+  await expect(navigation).toBeVisible();
+  for (const label of ['Inicio', 'Dr. Ronald', 'Embarazo y recursos', 'Artículos', 'Contacto', 'Solicitar cita']) {
+    await expect(navigation.getByText(label, { exact: true })).toBeInViewport();
+  }
   await page.keyboard.press('Escape');
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
 });
