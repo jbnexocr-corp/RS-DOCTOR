@@ -150,7 +150,12 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
 .scroll-hero-content .text-link { color: #201f1c; border-bottom-color: rgba(32,31,28,.72); }
 .scroll-hero-content .micro-note { color: #292722; font-weight: 600; }
 .scroll-hero-cue { position: absolute; z-index: 4; bottom: 2rem; left: 50%; display: flex; gap: .75rem; align-items: center; margin: 0; color: #4f4a42; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; transform: translateX(-50%); }
-.scroll-hero-cue span { width: 2.5rem; height: 1px; background: currentColor; }
+.scroll-hero-cue span { width: 2.5rem; height: 1px; background: currentColor; transform-origin: left center; animation: scroll-cue-pulse 1.8s cubic-bezier(.4,0,.2,1) infinite; }
+
+@keyframes scroll-cue-pulse {
+  0%, 100% { opacity: .55; transform: scaleX(.55); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
 
 @media (max-width: 47.99rem) {
   .scroll-hero-stage { height: 100svh; min-height: 0; }
@@ -193,6 +198,7 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
   .scroll-hero-video { display: none !important; }
   .scroll-hero-poster { opacity: 1 !important; }
   .scroll-hero-transition { display: none; }
+  .scroll-hero-cue span { animation: none; }
 }
 
 .section-intro, .resources-intro { margin-bottom: 3.5rem; }

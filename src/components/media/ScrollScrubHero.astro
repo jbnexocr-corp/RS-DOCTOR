@@ -75,6 +75,27 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       <span></span>{locale === 'es' ? 'Desliza para continuar' : 'Scroll to continue'}
     </p>
   </div>
+
+  <script is:inline>
+    (() => {
+      const root = document.currentScript?.closest('[data-scroll-hero]');
+      const video = root?.querySelector('[data-scroll-hero-video]');
+      if (!(root instanceof HTMLElement) || !(video instanceof HTMLVideoElement)) return;
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const saveData = navigator.connection?.saveData === true;
+      if (reducedMotion || saveData || !video.canPlayType('video/mp4')) return;
+
+      const mobile = window.matchMedia('(max-width: 47.99rem)').matches;
+      const source = mobile ? video.dataset.mobileVideoSrc : video.dataset.desktopVideoSrc;
+      if (!source) return;
+
+      root.dataset.heroState = 'loading';
+      video.src = source;
+      video.dataset.sourceSelected = 'true';
+      video.load();
+    })();
+  </script>
 </section>
 
 <script>
@@ -103,6 +124,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       let resizeTimer = 0;
       let loadTimer = 0;
       let seekFrame = 0;
+      let seekRetryFrames = 0;
       let targetTime = 0;
       let viewportWidth = window.innerWidth;
       let videoDuration = 0;
@@ -120,7 +142,20 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
 
       const applyLatestFrame = () => {
         seekFrame = 0;
-        if (!videoReady || !video || video.seeking || video.readyState < 2 || videoDuration <= 0 || Math.abs(video.currentTime - targetTime) < sourceFrameDuration * 0.45) return;
+        if (!videoReady || !video || videoDuration <= 0 || Math.abs(video.currentTime - targetTime) < sourceFrameDuration * 0.45) {
+          seekRetryFrames = 0;
+          return;
+        }
+        if (video.seeking || video.readyState < 2) {
+          if (seekRetryFrames < 90) {
+            seekRetryFrames += 1;
+            seekFrame = requestAnimationFrame(applyLatestFrame);
+          } else {
+            seekRetryFrames = 0;
+          }
+          return;
+        }
+        seekRetryFrames = 0;
         try { video.currentTime = targetTime; } catch { showFallback(); }
       };
 
@@ -216,6 +251,27 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         window.setTimeout(finish, 700);
       };
 
+      let gesturePrimed = false;
+      const primeVideoOnGesture = () => {
+        if (!video || !mobileQuery.matches || fallbackApplied || gesturePrimed || video.readyState < 2) return;
+        gesturePrimed = true;
+        const intendedTime = targetTime;
+        const playAttempt = video.play();
+        if (!playAttempt) {
+          video.pause();
+          targetTime = intendedTime;
+          queueCurrentFrame();
+          return;
+        }
+        playAttempt
+          .then(() => {
+            video.pause();
+            targetTime = intendedTime;
+            queueCurrentFrame();
+          })
+          .catch(() => { gesturePrimed = false; });
+      };
+
       const onMetadata = () => {
         if (!video || !Number.isFinite(video.duration) || video.duration <= 0) {
           showFallback();
@@ -249,6 +305,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       window.addEventListener('resize', refresh, { passive: true });
       window.addEventListener('orientationchange', refreshOrientation, { passive: true });
       reducedMotion.addEventListener('change', onReducedMotionChange);
+      root.addEventListener('pointerdown', primeVideoOnGesture, { passive: true });
 
       if (!video || saveData || !video.canPlayType('video/mp4')) {
         showFallback();
@@ -257,14 +314,18 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         if (!selectedVideoSrc) {
           showFallback();
         } else {
-          video.src = selectedVideoSrc;
-          video.addEventListener('loadedmetadata', onMetadata, { once: true });
           video.addEventListener('seeked', onSeeked);
           video.addEventListener('loadeddata', onPlayable);
           video.addEventListener('canplay', onPlayable);
           video.addEventListener('error', showFallback, { once: true });
           loadTimer = window.setTimeout(showFallback, 12000);
-          video.load();
+          if (video.dataset.sourceSelected !== 'true') {
+            video.src = selectedVideoSrc;
+            video.dataset.sourceSelected = 'true';
+            video.load();
+          }
+          if (video.readyState >= 1) onMetadata();
+          else video.addEventListener('loadedmetadata', onMetadata, { once: true });
         }
       }
 
@@ -276,6 +337,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         window.removeEventListener('resize', refresh);
         window.removeEventListener('orientationchange', refreshOrientation);
         reducedMotion.removeEventListener('change', onReducedMotionChange);
+        root.removeEventListener('pointerdown', primeVideoOnGesture);
         video?.removeEventListener('seeked', onSeeked);
         video?.removeEventListener('loadeddata', onPlayable);
         video?.removeEventListener('canplay', onPlayable);
