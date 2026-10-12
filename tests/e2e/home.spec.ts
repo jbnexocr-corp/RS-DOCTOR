@@ -23,15 +23,36 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
     currentTime: element.currentTime,
     duration: element.duration,
     paused: element.paused,
+    pixels: (() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 96;
+      canvas.height = 54;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context?.drawImage(element, 0, 0, canvas.width, canvas.height);
+      return context ? Array.from(context.getImageData(0, 0, canvas.width, canvas.height).data) : [];
+    })(),
   }));
   expect(before.duration).toBeGreaterThan(4);
   expect(before.paused).toBe(true);
 
   await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.05, behavior: 'instant' }));
   await page.waitForTimeout(700);
-  const after = await video.evaluate((element: HTMLVideoElement) => ({ currentTime: element.currentTime, paused: element.paused }));
+  const after = await video.evaluate((element: HTMLVideoElement) => ({
+    currentTime: element.currentTime,
+    paused: element.paused,
+    pixels: (() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 96;
+      canvas.height = 54;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context?.drawImage(element, 0, 0, canvas.width, canvas.height);
+      return context ? Array.from(context.getImageData(0, 0, canvas.width, canvas.height).data) : [];
+    })(),
+  }));
   expect(after.currentTime).toBeGreaterThan(before.currentTime + 0.5);
   expect(after.paused).toBe(true);
+  const visualDifference = before.pixels.reduce((total, channel, index) => total + Math.abs(channel - after.pixels[index]), 0) / before.pixels.length;
+  expect(visualDifference).toBeGreaterThan(2);
 
   await hero.evaluate((element: HTMLElement) => {
     const distance = window.innerHeight * (window.innerWidth < 768 ? 1.45 : 1.9);
