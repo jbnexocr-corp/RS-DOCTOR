@@ -65,7 +65,7 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
 .skip-link { position: fixed; z-index: 100; top: 1rem; left: 1rem; padding: .75rem 1rem; background: var(--color-ink); color: white; transform: translateY(-160%); transition: transform var(--transition); }
 .skip-link:focus { transform: translateY(0); }
 .page-shell { width: min(calc(100% - 2rem), var(--content-wide)); margin-inline: auto; }
-.section { padding-block: clamp(5rem, 10vw, 9rem); }
+.section { padding-block: clamp(3.75rem, 7vw, 6.5rem); }
 .eyebrow { margin-bottom: 1.2rem; color: var(--color-gold-accessible); font-size: .72rem; font-weight: 700; letter-spacing: .19em; line-height: 1.3; text-transform: uppercase; }
 .eyebrow-light { color: #dfbd60; }
 
@@ -159,6 +159,7 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
 }
 
 @media (max-width: 47.99rem) {
+  .section { padding-block: 3.5rem; }
   .scroll-hero-stage { height: 100svh; min-height: 0; }
   .scroll-hero-poster, .scroll-hero-poster img, .scroll-hero-video, .scroll-hero-canvas { object-position: 68% 44%; }
   .scroll-hero-scrim { background: linear-gradient(to top, rgba(250,247,241,.9) 0%, rgba(250,247,241,.64) 37%, rgba(250,247,241,.17) 68%, rgba(250,247,241,.04) 100%), linear-gradient(90deg, rgba(250,247,241,.2), transparent 72%), rgba(31,26,20,.07); }
@@ -203,7 +204,7 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
   .scroll-hero-cue span { animation: none; }
 }
 
-.section-intro, .resources-intro { margin-bottom: 3.5rem; }
+.section-intro, .resources-intro { margin-bottom: clamp(2.25rem, 4vw, 3.25rem); }
 .section-heading-grid h2, .resources-intro h2 { max-width: 12ch; margin-bottom: 1.5rem; }
 .section-heading-grid > p { max-width: 38rem; color: var(--color-stone); font-size: 1.05rem; }
 .service-list { list-style: none; padding: 0; border-top: 1px solid var(--color-border); }
@@ -260,7 +261,7 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
 .home-articles h2 { max-width: 14ch; }
 .home-articles-grid > div:last-child > p { max-width: 39rem; color: var(--color-stone); }
 
-.contact-section { padding-block: clamp(5rem, 10vw, 8rem); background: #252522; color: white; }
+.contact-section { padding-block: clamp(4rem, 7vw, 6rem); background: #252522; color: white; }
 .contact-grid h2 { max-width: 13ch; margin-bottom: 2.5rem; }
 .contact-copy > p:first-child { max-width: 36rem; color: #d8d4cb; font-size: 1.08rem; }
 .contact-copy { display: flex; flex-direction: column; align-items: flex-start; gap: .85rem; }

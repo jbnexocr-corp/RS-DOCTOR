@@ -127,6 +127,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       let resizeTimer = 0;
       let loadTimer = 0;
       let seekFrame = 0;
+      let nativeScrollFrame = 0;
       let seekRetryFrames = 0;
       let targetTime = 0;
       let viewportWidth = window.innerWidth;
@@ -180,6 +181,25 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         const rawTime = playhead.progress * videoDuration;
         targetTime = Math.min(Math.max(0, videoDuration - 0.015), Math.round(rawTime / sourceFrameDuration) * sourceFrameDuration);
         if (!seekFrame) seekFrame = requestAnimationFrame(applyLatestFrame);
+      };
+
+      const syncFrameFromNativeScroll = () => {
+        nativeScrollFrame = 0;
+        if (!mobileQuery.matches || reducedMotion.matches || fallbackApplied) return;
+
+        const scrollTrigger = timeline?.scrollTrigger;
+        const start = scrollTrigger?.start ?? root.offsetTop;
+        const end = scrollTrigger?.end ?? start + window.innerHeight * 1.45;
+        const distance = Math.max(1, end - start);
+        const nativeProgress = Math.min(1, Math.max(0, (window.scrollY - start) / distance));
+
+        if (Math.abs(playhead.progress - nativeProgress) < 0.004) return;
+        playhead.progress = nativeProgress;
+        queueCurrentFrame();
+      };
+
+      const onNativeScroll = () => {
+        if (!nativeScrollFrame) nativeScrollFrame = requestAnimationFrame(syncFrameFromNativeScroll);
       };
 
       const buildTimeline = () => {
@@ -299,6 +319,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       };
       window.addEventListener('resize', refresh, { passive: true });
       window.addEventListener('orientationchange', refreshOrientation, { passive: true });
+      window.addEventListener('scroll', onNativeScroll, { passive: true });
       reducedMotion.addEventListener('change', onReducedMotionChange);
 
       if (!video || saveData || !video.canPlayType('video/mp4')) {
@@ -327,9 +348,11 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         window.clearTimeout(loadTimer);
         window.clearTimeout(resizeTimer);
         if (seekFrame) cancelAnimationFrame(seekFrame);
+        if (nativeScrollFrame) cancelAnimationFrame(nativeScrollFrame);
         destroyTimeline();
         window.removeEventListener('resize', refresh);
         window.removeEventListener('orientationchange', refreshOrientation);
+        window.removeEventListener('scroll', onNativeScroll);
         reducedMotion.removeEventListener('change', onReducedMotionChange);
         video?.removeEventListener('seeked', onSeeked);
         video?.removeEventListener('loadeddata', onPlayable);

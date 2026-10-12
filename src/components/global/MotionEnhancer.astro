@@ -11,8 +11,6 @@
     const mobile = window.matchMedia('(max-width: 67.99rem)').matches;
 
     const selectors = [
-      'main section',
-      'main header',
       'main h1',
       'main h2',
       'main h3',
@@ -38,6 +36,12 @@
       if (element.matches('h1, h2, h3')) element.classList.add('motion-heading');
     });
 
+    const pendingElements = new Set(elements);
+    const reveal = (element) => {
+      element.classList.add('motion-visible');
+      pendingElements.delete(element);
+    };
+
     const progress = document.createElement('span');
     progress.className = 'motion-scroll-progress';
     progress.setAttribute('aria-hidden', 'true');
@@ -46,7 +50,7 @@
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        entry.target.classList.add('motion-visible');
+        reveal(entry.target);
         observer.unobserve(entry.target);
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
@@ -64,6 +68,16 @@
     parallaxMedia.forEach((image) => parallaxObserver.observe(image));
 
     let ticking = false;
+    const revealNearViewport = () => {
+      const viewport = window.innerHeight;
+      pendingElements.forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        if (rect.top <= viewport * 1.12 && rect.bottom >= viewport * -.12) {
+          reveal(element);
+          observer.unobserve(element);
+        }
+      });
+    };
     const updateParallax = () => {
       const viewport = window.innerHeight;
       const scrollable = document.documentElement.scrollHeight - viewport;
@@ -73,6 +87,7 @@
         const mediaProgress = (rect.top + rect.height / 2 - viewport / 2) / viewport;
         image.style.setProperty('--parallax-y', `${Math.max(-14, Math.min(14, mediaProgress * -24))}px`);
       });
+      revealNearViewport();
       ticking = false;
     };
     window.addEventListener('scroll', () => {
@@ -80,6 +95,7 @@
       ticking = true;
       requestAnimationFrame(updateParallax);
     }, { passive: true });
+    window.addEventListener('resize', revealNearViewport, { passive: true });
     document.addEventListener('pointerdown', (event) => {
       const target = event.target instanceof Element ? event.target.closest('a, button, summary') : null;
       if (!target) return;
@@ -88,5 +104,6 @@
       setTimeout(() => target.classList.remove('motion-tap'), 380);
     }, { passive: true });
     updateParallax();
+    window.setTimeout(revealNearViewport, 600);
   })();
 </script>

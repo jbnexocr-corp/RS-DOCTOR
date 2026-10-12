@@ -79,6 +79,29 @@ test('header hides while scrolling down and returns while scrolling up', async (
   await expect(header).not.toHaveClass(/site-header-hidden/);
 });
 
+test('content remains visible when IntersectionObserver does not report entries', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'IntersectionObserver', {
+      configurable: true,
+      value: class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() { return []; }
+        root = null;
+        rootMargin = '0px';
+        thresholds = [0];
+      },
+    });
+  });
+  await page.goto('/es/');
+
+  await expect(page.locator('main > section.motion-reveal')).toHaveCount(0);
+  const servicesTitle = page.locator('#services-title');
+  await servicesTitle.scrollIntoViewIfNeeded();
+  await expect.poll(async () => servicesTitle.evaluate((element) => getComputedStyle(element).opacity)).toBe('1');
+});
+
 test('home hero uses its static poster when reduced motion is requested', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/es/');
