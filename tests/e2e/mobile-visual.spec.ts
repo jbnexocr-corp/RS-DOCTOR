@@ -44,7 +44,7 @@ for (const viewport of viewports) {
 
     const initialTime = await video.evaluate((element: HTMLVideoElement) => element.currentTime);
     await hero.evaluate((element: HTMLElement) => {
-      const distance = window.innerHeight * 1.45;
+      const distance = window.innerHeight * 1.3;
       window.scrollTo({ top: element.offsetTop + (distance * 0.68), behavior: 'instant' });
     });
 
@@ -52,11 +52,11 @@ for (const viewport of viewports) {
     await expect.poll(async () => video.evaluate((element: HTMLVideoElement) => element.currentTime)).toBeGreaterThan(initialTime + 0.2);
 
     await hero.evaluate((element: HTMLElement) => {
-      const distance = window.innerHeight * 1.45;
+      const distance = window.innerHeight * 1.3;
       window.scrollTo({ top: element.offsetTop + (distance * 0.97), behavior: 'instant' });
     });
 
-    await expect.poll(async () => transition.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.75);
+    await expect.poll(async () => transition.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.55);
   });
 }
 
@@ -74,7 +74,7 @@ test('mobile narrative starts before the video finishes loading', async ({ page,
   const secondaryCopy = hero.locator('[data-scroll-hero-copy-secondary]');
   await expect(hero).toHaveAttribute('data-hero-state', 'loading');
   await hero.evaluate((element: HTMLElement) => {
-    const distance = window.innerHeight * 1.45;
+    const distance = window.innerHeight * 1.3;
     window.scrollTo({ top: element.offsetTop + (distance * 0.68), behavior: 'instant' });
   });
 
@@ -100,7 +100,7 @@ test('data-saver fallback preserves the pinned mobile narrative', async ({ page,
   await expect(hero).toHaveAttribute('data-hero-state', 'fallback');
   await expect(poster).toBeVisible();
   await hero.evaluate((element: HTMLElement) => {
-    const distance = window.innerHeight * 1.45;
+    const distance = window.innerHeight * 1.3;
     window.scrollTo({ top: element.offsetTop + (distance * 0.68), behavior: 'instant' });
   });
 

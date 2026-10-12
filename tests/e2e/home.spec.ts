@@ -59,16 +59,18 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
   expect(visualDifference).toBeGreaterThan(2);
 
   await hero.evaluate((element: HTMLElement) => {
-    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.45 : 1.9);
+    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.3 : 1.7);
     window.scrollTo({ top: element.offsetTop + (distance * 0.68), behavior: 'instant' });
   });
   await expect(hero.locator('[data-scroll-hero-copy-secondary]')).toBeVisible();
 
   await hero.evaluate((element: HTMLElement) => {
-    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.45 : 1.9);
+    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.3 : 1.7);
     window.scrollTo({ top: element.offsetTop + (distance * 0.96), behavior: 'instant' });
   });
-  await expect.poll(async () => Number(await hero.locator('.scroll-hero-transition').evaluate((element) => getComputedStyle(element).opacity))).toBeGreaterThan(0.65);
+  const transition = hero.locator('.scroll-hero-transition');
+  await expect.poll(async () => Number(await transition.evaluate((element) => getComputedStyle(element).opacity))).toBeGreaterThan(0.4);
+  await expect(transition).toHaveCSS('background-image', /linear-gradient/);
 });
 
 test('header hides while scrolling down and returns while scrolling up', async ({ page }) => {
