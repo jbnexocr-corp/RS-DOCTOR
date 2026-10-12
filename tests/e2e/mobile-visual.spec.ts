@@ -106,3 +106,38 @@ test('data-saver fallback preserves the pinned mobile narrative', async ({ page,
 
   await expect.poll(async () => secondaryCopy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.75);
 });
+
+test('mobile hero renders frames when autoplay is unavailable', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Mobile-only media policy coverage.');
+
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException('Autoplay blocked', 'NotAllowedError'));
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/es/');
+
+  const hero = page.locator('[data-scroll-hero]');
+  const canvas = hero.locator('[data-scroll-hero-canvas]');
+  const video = hero.locator('[data-scroll-hero-video]');
+  await expect(hero).toHaveAttribute('data-hero-state', 'ready', { timeout: 15_000 });
+
+  const sample = () => canvas.evaluate((element: HTMLCanvasElement) => {
+    const probe = document.createElement('canvas');
+    probe.width = 96;
+    probe.height = 54;
+    const context = probe.getContext('2d', { willReadFrequently: true });
+    context?.drawImage(element, 0, 0, probe.width, probe.height);
+    return context ? Array.from(context.getImageData(0, 0, probe.width, probe.height).data) : [];
+  });
+
+  const before = await sample();
+  await hero.evaluate((element: HTMLElement) => {
+    window.scrollTo({ top: element.offsetTop + (window.innerHeight * 0.9), behavior: 'instant' });
+  });
+  await expect.poll(async () => video.evaluate((element: HTMLVideoElement) => element.currentTime)).toBeGreaterThan(1);
+  const after = await sample();
+  const difference = before.reduce((total, channel, index) => total + Math.abs(channel - after[index]), 0) / before.length;
+
+  expect(difference).toBeGreaterThan(2);
+  await expect.poll(async () => video.evaluate((element: HTMLVideoElement) => element.paused)).toBe(true);
+});

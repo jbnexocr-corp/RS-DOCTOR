@@ -126,7 +126,6 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       let timeline: gsap.core.Timeline | undefined;
       let resizeTimer = 0;
       let loadTimer = 0;
-      let paintTimer = 0;
       let seekFrame = 0;
       let seekRetryFrames = 0;
       let targetTime = 0;
@@ -135,7 +134,6 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       let videoReady = false;
       let fallbackApplied = false;
       let activationStarted = false;
-      let repaintingFrame = false;
       const playhead = { progress: 0 };
       const sourceFrameDuration = 1 / 24;
 
@@ -164,7 +162,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           seekRetryFrames = 0;
           return;
         }
-        if (repaintingFrame || video.seeking || video.readyState < 2) {
+        if (video.seeking || video.readyState < 2) {
           if (seekRetryFrames < 90) {
             seekRetryFrames += 1;
             seekFrame = requestAnimationFrame(applyLatestFrame);
@@ -175,42 +173,6 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         }
         seekRetryFrames = 0;
         try { video.currentTime = targetTime; } catch { showFallback(); }
-      };
-
-      const repaintCurrentFrame = () => {
-        if (!videoReady || !video || repaintingFrame || video.readyState < 2) return;
-        repaintingFrame = true;
-        const paintedTarget = targetTime;
-        let finished = false;
-
-        const finishPaint = () => {
-          if (finished) return;
-          finished = true;
-          window.clearTimeout(paintTimer);
-          drawCurrentFrame();
-          video.pause();
-          repaintingFrame = false;
-          if (Math.abs(targetTime - paintedTarget) >= sourceFrameDuration * 0.45) queueCurrentFrame();
-        };
-
-        const schedulePaintFinish = () => {
-          if ('requestVideoFrameCallback' in video) {
-            video.requestVideoFrameCallback(() => finishPaint());
-          } else {
-            requestAnimationFrame(() => requestAnimationFrame(finishPaint));
-          }
-          paintTimer = window.setTimeout(finishPaint, 180);
-        };
-
-        const playAttempt = video.play();
-        if (playAttempt) {
-          playAttempt.then(schedulePaintFinish).catch(() => {
-            repaintingFrame = false;
-            if (Math.abs(video.currentTime - targetTime) > sourceFrameDuration) queueCurrentFrame();
-          });
-        } else {
-          schedulePaintFinish();
-        }
       };
 
       const queueCurrentFrame = () => {
@@ -295,35 +257,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           queueCurrentFrame();
         };
 
-        if (!mobileQuery.matches) {
-          finish();
-          return;
-        }
-
-        const playAttempt = video.play();
-        if (playAttempt) playAttempt.then(finish).catch(finish);
-        window.setTimeout(finish, 700);
-      };
-
-      let gesturePrimed = false;
-      const primeVideoOnGesture = () => {
-        if (!video || !mobileQuery.matches || fallbackApplied || gesturePrimed || video.readyState < 2) return;
-        gesturePrimed = true;
-        const intendedTime = targetTime;
-        const playAttempt = video.play();
-        if (!playAttempt) {
-          video.pause();
-          targetTime = intendedTime;
-          queueCurrentFrame();
-          return;
-        }
-        playAttempt
-          .then(() => {
-            video.pause();
-            targetTime = intendedTime;
-            queueCurrentFrame();
-          })
-          .catch(() => { gesturePrimed = false; });
+        finish();
       };
 
       const onMetadata = () => {
@@ -338,11 +272,10 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
 
       const onSeeked = () => {
         if (!video) return;
+        drawCurrentFrame();
         if (Math.abs(video.currentTime - targetTime) > 0.02) {
           if (!seekFrame) seekFrame = requestAnimationFrame(applyLatestFrame);
-          return;
         }
-        repaintCurrentFrame();
       };
       const onPlayable = () => {
         drawCurrentFrame();
@@ -367,7 +300,6 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       window.addEventListener('resize', refresh, { passive: true });
       window.addEventListener('orientationchange', refreshOrientation, { passive: true });
       reducedMotion.addEventListener('change', onReducedMotionChange);
-      root.addEventListener('pointerdown', primeVideoOnGesture, { passive: true });
 
       if (!video || saveData || !video.canPlayType('video/mp4')) {
         showFallback();
@@ -393,14 +325,12 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
 
       document.addEventListener('astro:before-swap', () => {
         window.clearTimeout(loadTimer);
-        window.clearTimeout(paintTimer);
         window.clearTimeout(resizeTimer);
         if (seekFrame) cancelAnimationFrame(seekFrame);
         destroyTimeline();
         window.removeEventListener('resize', refresh);
         window.removeEventListener('orientationchange', refreshOrientation);
         reducedMotion.removeEventListener('change', onReducedMotionChange);
-        root.removeEventListener('pointerdown', primeVideoOnGesture);
         video?.removeEventListener('seeked', onSeeked);
         video?.removeEventListener('loadeddata', onPlayable);
         video?.removeEventListener('canplay', onPlayable);
