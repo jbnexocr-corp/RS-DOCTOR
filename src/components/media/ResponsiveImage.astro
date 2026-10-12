@@ -21,6 +21,8 @@ const {
   fetchpriority = 'auto',
   class: className,
 } = Astro.props;
+
+const effectiveFetchPriority = fetchpriority === 'auto' && loading === 'lazy' ? 'low' : fetchpriority;
 ---
 
 <Picture
@@ -31,7 +33,7 @@ const {
   widths={widths}
   sizes={sizes}
   loading={loading}
-  fetchpriority={fetchpriority}
+  fetchpriority={effectiveFetchPriority}
   decoding="async"
   class={className}
 />

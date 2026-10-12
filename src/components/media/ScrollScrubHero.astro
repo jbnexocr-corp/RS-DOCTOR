@@ -146,7 +146,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
 
       const drawCurrentFrame = () => {
         if (!video || !canvas || !canvasContext || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
-        const maximumWidth = mobileQuery.matches ? 720 : 1440;
+        const maximumWidth = mobileQuery.matches ? 720 : 1280;
         const scale = Math.min(1, maximumWidth / video.videoWidth);
         const width = Math.max(1, Math.round(video.videoWidth * scale));
         const height = Math.max(1, Math.round(video.videoHeight * scale));
@@ -214,7 +214,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
             end: () => `+=${Math.round(window.innerHeight * (mobileQuery.matches ? 1.45 : 1.9))}`,
             pin: stage,
             pinSpacing: true,
-            scrub: mobileQuery.matches ? 0.08 : 0.1,
+            scrub: mobileQuery.matches ? 0.06 : 0.045,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },

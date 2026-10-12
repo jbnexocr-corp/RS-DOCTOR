@@ -37,7 +37,10 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
   expect(before.paused).toBe(true);
 
   await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 1.05, behavior: 'instant' }));
-  await page.waitForTimeout(700);
+  await expect.poll(
+    async () => video.evaluate((element: HTMLVideoElement) => element.currentTime),
+    { timeout: 4_000 },
+  ).toBeGreaterThan(before.currentTime + 0.5);
   const after = await video.evaluate((element: HTMLVideoElement) => ({
     currentTime: element.currentTime,
     paused: element.paused,

@@ -66,6 +66,10 @@ h3 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.25; }
 .skip-link:focus { transform: translateY(0); }
 .page-shell { width: min(calc(100% - 2rem), var(--content-wide)); margin-inline: auto; }
 .section { padding-block: clamp(3.75rem, 7vw, 6.5rem); }
+@supports (content-visibility: auto) {
+  main > .section,
+  main > .contact-section { content-visibility: auto; contain-intrinsic-size: auto 50rem; }
+}
 .eyebrow { margin-bottom: 1.2rem; color: var(--color-gold-accessible); font-size: .72rem; font-weight: 700; letter-spacing: .19em; line-height: 1.3; text-transform: uppercase; }
 .eyebrow-light { color: #dfbd60; }
 
