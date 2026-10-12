@@ -12,6 +12,7 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
   await page.goto('/es/');
   const hero = page.locator('[data-scroll-hero]');
   const video = hero.locator('video');
+  const canvas = hero.locator('[data-scroll-hero-canvas]');
 
   await expect(hero).toHaveAttribute('data-hero-state', 'ready', { timeout: 15_000 });
   await expect(video).toHaveAttribute('muted', '');
@@ -23,15 +24,15 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
     currentTime: element.currentTime,
     duration: element.duration,
     paused: element.paused,
-    pixels: (() => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 96;
-      canvas.height = 54;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      context?.drawImage(element, 0, 0, canvas.width, canvas.height);
-      return context ? Array.from(context.getImageData(0, 0, canvas.width, canvas.height).data) : [];
-    })(),
   }));
+  const beforePixels = await canvas.evaluate((element: HTMLCanvasElement) => {
+    const probe = document.createElement('canvas');
+    probe.width = 96;
+    probe.height = 54;
+    const context = probe.getContext('2d', { willReadFrequently: true });
+    context?.drawImage(element, 0, 0, probe.width, probe.height);
+    return context ? Array.from(context.getImageData(0, 0, probe.width, probe.height).data) : [];
+  });
   expect(before.duration).toBeGreaterThan(4);
   expect(before.paused).toBe(true);
 
@@ -40,18 +41,18 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
   const after = await video.evaluate((element: HTMLVideoElement) => ({
     currentTime: element.currentTime,
     paused: element.paused,
-    pixels: (() => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 96;
-      canvas.height = 54;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      context?.drawImage(element, 0, 0, canvas.width, canvas.height);
-      return context ? Array.from(context.getImageData(0, 0, canvas.width, canvas.height).data) : [];
-    })(),
   }));
+  const afterPixels = await canvas.evaluate((element: HTMLCanvasElement) => {
+    const probe = document.createElement('canvas');
+    probe.width = 96;
+    probe.height = 54;
+    const context = probe.getContext('2d', { willReadFrequently: true });
+    context?.drawImage(element, 0, 0, probe.width, probe.height);
+    return context ? Array.from(context.getImageData(0, 0, probe.width, probe.height).data) : [];
+  });
   expect(after.currentTime).toBeGreaterThan(before.currentTime + 0.5);
   expect(after.paused).toBe(true);
-  const visualDifference = before.pixels.reduce((total, channel, index) => total + Math.abs(channel - after.pixels[index]), 0) / before.pixels.length;
+  const visualDifference = beforePixels.reduce((total, channel, index) => total + Math.abs(channel - afterPixels[index]), 0) / beforePixels.length;
   expect(visualDifference).toBeGreaterThan(2);
 
   await hero.evaluate((element: HTMLElement) => {

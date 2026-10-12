@@ -41,6 +41,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         data-mobile-video-src={mobileVideoSrc}
         data-desktop-video-src={videoSrc}
       ></video>
+      <canvas class="scroll-hero-canvas" data-scroll-hero-canvas></canvas>
       <span class="scroll-hero-scrim"></span>
       <span class="scroll-hero-transition"></span>
     </div>
@@ -111,6 +112,8 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       root.dataset.initialized = 'true';
 
       const video = root.querySelector<HTMLVideoElement>('[data-scroll-hero-video]');
+      const canvas = root.querySelector<HTMLCanvasElement>('[data-scroll-hero-canvas]');
+      const canvasContext = canvas?.getContext('2d', { alpha: false, desynchronized: true });
       const stage = root.querySelector<HTMLElement>('.scroll-hero-stage');
       const copy = root.querySelector<HTMLElement>('[data-scroll-hero-copy]');
       const secondaryCopy = root.querySelector<HTMLElement>('[data-scroll-hero-copy-secondary]');
@@ -142,6 +145,19 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         timeline = undefined;
       };
 
+      const drawCurrentFrame = () => {
+        if (!video || !canvas || !canvasContext || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+        const maximumWidth = mobileQuery.matches ? 720 : 1440;
+        const scale = Math.min(1, maximumWidth / video.videoWidth);
+        const width = Math.max(1, Math.round(video.videoWidth * scale));
+        const height = Math.max(1, Math.round(video.videoHeight * scale));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        canvasContext.drawImage(video, 0, 0, width, height);
+      };
+
       const applyLatestFrame = () => {
         seekFrame = 0;
         if (!videoReady || !video || videoDuration <= 0 || Math.abs(video.currentTime - targetTime) < sourceFrameDuration * 0.45) {
@@ -171,6 +187,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           if (finished) return;
           finished = true;
           window.clearTimeout(paintTimer);
+          drawCurrentFrame();
           video.pause();
           repaintingFrame = false;
           if (Math.abs(targetTime - paintedTarget) >= sourceFrameDuration * 0.45) queueCurrentFrame();
@@ -204,7 +221,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       };
 
       const buildTimeline = () => {
-        if (timeline || !stage || !copy || !secondaryCopy || !transition || !poster) return;
+        if (timeline || !stage || !copy || !secondaryCopy || !transition || !poster || !canvas) return;
         root.dataset.heroState = 'loading';
 
         timeline = gsap.timeline({
@@ -232,7 +249,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           .to(secondaryCopy, { autoAlpha: 1, y: 0, duration: 0.1 }, 0.5)
           .to(secondaryCopy, { autoAlpha: 0, y: -8, duration: 0.12 }, 0.86)
           .to(transition, { opacity: 1, duration: 0.16 }, 0.84)
-          .to([video, poster].filter(Boolean), { autoAlpha: 0, duration: 0.12 }, 0.88);
+          .to([canvas, poster], { autoAlpha: 0, duration: 0.12 }, 0.88);
 
         requestAnimationFrame(() => ScrollTrigger.refresh());
       };
@@ -252,7 +269,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         if (reducedMotion.matches) destroyTimeline();
       };
 
-      if (!stage || !copy || !secondaryCopy || !transition || !poster) {
+      if (!stage || !copy || !secondaryCopy || !transition || !poster || !canvas || !canvasContext) {
         root.dataset.heroState = 'fallback';
         return;
       }
@@ -274,6 +291,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           settled = true;
           video.pause();
           videoReady = true;
+          drawCurrentFrame();
           root.dataset.heroState = 'ready';
           queueCurrentFrame();
         };
@@ -327,7 +345,10 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         }
         repaintCurrentFrame();
       };
-      const onPlayable = () => queueCurrentFrame();
+      const onPlayable = () => {
+        drawCurrentFrame();
+        queueCurrentFrame();
+      };
       const onReducedMotionChange = (event: MediaQueryListEvent) => {
         if (event.matches) showFallback();
       };
