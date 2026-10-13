@@ -24,7 +24,7 @@ const pillarHref = locale === 'es' ? `/es/${service.pillarSlug}/` : `/en/${servi
       <p class="service-summary">{service.summary}</p>
       <div class="button-row">
         <a class="button button-primary" href={locale === 'es' ? '/es/contacto/' : '/en/contact/'}>{locale === 'es' ? 'Solicitar valoración' : 'Request an evaluation'}</a>
-        <a class="text-link" href={pillarHref}>{locale === 'es' ? 'Volver al área' : 'Back to care area'} <span aria-hidden="true">→</span></a>
+        <a class="text-link" href={pillarHref}>{locale === 'es' ? 'Volver al área' : 'Back to care area'}</a>
       </div>
       <p class="review-status">{formatPlaceholder(locale === 'es' ? 'Revisión médica pendiente' : 'Medical review pending', locale)}</p>
     </div>

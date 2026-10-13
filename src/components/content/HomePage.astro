@@ -43,7 +43,6 @@ const pillarHrefs = locale === 'es'
         <li>
           <span class="service-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
           <a href={pillarHrefs[index]}><h3>{item.title}</h3><p>{item.text}</p></a>
-          <span class="service-arrow" aria-hidden="true">↗</span>
         </li>
       ))}
     </ol>
@@ -59,7 +58,7 @@ const pillarHrefs = locale === 'es'
         <h2 id="doctor-title">{content.doctor.title}</h2>
         <p class="lead-copy">{content.doctor.text}</p>
         <p class="pending-line"><span aria-hidden="true"></span>{formatPlaceholder(content.doctor.pending, locale)}</p>
-        <a class="text-link" href={locale === 'es' ? '/es/dr-ronald-salazar/' : '/en/doctor-ronald-salazar/'}>{content.doctor.link}<span aria-hidden="true"> →</span></a>
+        <a class="text-link" href={locale === 'es' ? '/es/dr-ronald-salazar/' : '/en/doctor-ronald-salazar/'}>{content.doctor.link}</a>
       </div>
     </div>
   </section>
@@ -86,7 +85,7 @@ const pillarHrefs = locale === 'es'
         <p class="eyebrow eyebrow-light">{content.surgery.eyebrow}</p>
         <h2 id="surgery-title">{content.surgery.title}</h2>
         <p>{content.surgery.text}</p>
-      <a class="text-link text-link-light" href={locale === 'es' ? '/es/cirugia-ginecologica/' : '/en/gynecological-surgery/'}>{content.surgery.link}<span aria-hidden="true"> →</span></a>
+      <a class="text-link text-link-light" href={locale === 'es' ? '/es/cirugia-ginecologica/' : '/en/gynecological-surgery/'}>{content.surgery.link}</a>
       </div>
       <figure class="surgery-image">
         <ResponsiveImage src={doctorSurgery} alt={content.surgery.imageAlt} widths={[480, 720, 960]} sizes="(min-width: 900px) 48vw, 100vw" />
@@ -136,7 +135,7 @@ const pillarHrefs = locale === 'es'
   <section class="home-articles section" aria-labelledby="home-articles-title">
     <div class="page-shell home-articles-grid">
       <div><p class="eyebrow">{locale === 'es' ? 'Artículos recientes' : 'Recent articles'}</p><h2 id="home-articles-title">{locale === 'es' ? 'Información revisada para tomar mejores decisiones' : 'Reviewed information for better decisions'}</h2></div>
-      <div><p>{locale === 'es' ? 'El sistema editorial está listo para mostrar artículos únicamente cuando tengan autor, revisión médica, fecha y fuentes.' : 'The editorial system is ready to display articles only after they have an author, medical review, date, and sources.'}</p><a class="text-link" href={locale === 'es' ? '/es/articulos/' : '/en/articles/'}>{locale === 'es' ? 'Visitar la biblioteca' : 'Visit the library'}<span aria-hidden="true"> →</span></a></div>
+      <div><p>{locale === 'es' ? 'El sistema editorial está listo para mostrar artículos únicamente cuando tengan autor, revisión médica, fecha y fuentes.' : 'The editorial system is ready to display articles only after they have an author, medical review, date, and sources.'}</p><a class="text-link" href={locale === 'es' ? '/es/articulos/' : '/en/articles/'}>{locale === 'es' ? 'Visitar la biblioteca' : 'Visit the library'}</a></div>
     </div>
   </section>
 
@@ -150,7 +149,7 @@ const pillarHrefs = locale === 'es'
         <p>{content.contact.text}</p>
         <a class="button button-gold" href={contactDetails.whatsapp.href} target="_blank" rel="noopener noreferrer" data-analytics-event="click_whatsapp" data-analytics-placement="home_contact">{content.contact.primary}</a>
         <a class="contact-home-phone" href={contactDetails.phone.href} data-analytics-event="click_phone" data-analytics-placement="home_contact">{content.contact.secondary}: {contactDetails.phone.display}</a>
-        <a class="text-link text-link-light" href={locale === 'es' ? '/es/contacto/' : '/en/contact/'}>{locale === 'es' ? 'Ver todas las opciones de contacto' : 'View all contact options'}<span aria-hidden="true"> →</span></a>
+        <a class="text-link text-link-light" href={locale === 'es' ? '/es/contacto/' : '/en/contact/'}>{locale === 'es' ? 'Ver todas las opciones de contacto' : 'View all contact options'}</a>
         <p class="contact-pending" id="estado-contacto">{content.contact.pending}</p>
       </div>
     </div>

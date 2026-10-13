@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { draftPagesNoindex } from '@/lib/site';
 import ServiceDetailPage from '@/components/content/ServiceDetailPage.astro';
 import { serviceDetails } from '@/data/serviceDetails';
 
@@ -11,6 +12,6 @@ const { service } = Astro.props;
 const pathname = `/en/services/${service.slug}/`;
 const alternatePathname = `/es/servicios/${service.alternateSlug}/`;
 ---
-<BaseLayout locale="en" title={`${service.title} | Dr. Ronald Salazar`} description={service.description} {pathname} {alternatePathname} skipText="Skip to main content" noindex={true}>
+<BaseLayout locale="en" title={`${service.title} | Dr. Ronald Salazar`} description={service.description} {pathname} {alternatePathname} skipText="Skip to main content" noindex={draftPagesNoindex}>
   <ServiceDetailPage locale="en" {service} {pathname} />
 </BaseLayout>

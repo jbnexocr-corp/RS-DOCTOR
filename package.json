@@ -21,16 +21,16 @@
     "@astrojs/node": "^11.1.7",
     "@aws-sdk/client-s3": "^3.1149.0",
     "@smithy/node-http-handler": "^4.12.1",
-    "astro": "latest",
+    "astro": "^7.3.5",
     "gsap": "^3.15.0",
     "postgres": "^3.4.9",
     "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@astrojs/check": "latest",
-    "@playwright/test": "latest",
+    "@astrojs/check": "^0.9.10",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.5",
-    "typescript": "latest",
-    "vitest": "latest"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }

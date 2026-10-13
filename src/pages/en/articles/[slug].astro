@@ -1,6 +1,8 @@
 ---
 import ArticlePage from '@/components/content/ArticlePage.astro';
+import { loadArticleForPage } from '@/lib/server/articles';
 export const prerender = false;
 const { slug = '' } = Astro.params;
+const { article, serviceUnavailable } = await loadArticleForPage(Astro, 'en', slug);
 ---
-<ArticlePage locale="en" {slug} />
+<ArticlePage locale="en" {slug} {article} {serviceUnavailable} />

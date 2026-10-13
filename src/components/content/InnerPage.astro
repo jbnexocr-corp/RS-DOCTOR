@@ -14,10 +14,11 @@ import { placeholderEnd, placeholderStart } from '@/lib/placeholders';
 import { serviceDetails } from '@/data/serviceDetails';
 import SocialLinks from '@/components/navigation/SocialLinks.astro';
 import ContactChannels from '@/components/contact/ContactChannels.astro';
-import { listPublishedArticles } from '@/lib/server/content';
+import type { EditorialRecord } from '@/lib/admin/repository';
 
-interface Props { locale: Locale; page: InnerPageContent; pathname: string }
-const { locale, page, pathname } = Astro.props;
+// En la biblioteca de artículos, la página carga los datos y fija el estado HTTP.
+interface Props { locale: Locale; page: InnerPageContent; pathname: string; publishedArticles?: EditorialRecord[]; articlesUnavailable?: boolean }
+const { locale, page, pathname, publishedArticles = [], articlesUnavailable = false } = Astro.props;
 const shell = homeContent[locale];
 const images = { beige: beigeImage, blue: blueImage, scrubs: scrubsImage };
 const image = page.image === 'none' ? undefined : images[page.image];
@@ -27,12 +28,6 @@ const imageAlt = locale === 'es'
 const reviewLabel = locale === 'es' ? 'Contenido provisional pendiente de revisión y aprobación' : 'Provisional content pending review and approval';
 const alternateHref = `/${locale === 'es' ? 'en' : 'es'}/${page.alternateSlug}/`;
 const pageServices = page.kind === 'pillar' ? serviceDetails[locale].filter((service) => service.pillarSlug === page.slug) : [];
-let publishedArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
-if (page.kind === 'articles') {
-  Astro.response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-  try { publishedArticles = await listPublishedArticles(locale); }
-  catch { Astro.response.headers.set('Retry-After', '30'); }
-}
 ---
 
 <SiteHeader {locale} content={shell.nav} currentPath={pathname} {alternateHref} />
@@ -76,7 +71,6 @@ if (page.kind === 'articles') {
             <a href={locale === 'es' ? `/es/servicios/${service.slug}/` : `/en/services/${service.slug}/`}>
               <span>{String(index + 1).padStart(2, '0')}</span>
               <div><h3>{service.title}</h3><p>{service.summary}</p></div>
-              <b aria-hidden="true">→</b>
             </a>
           ))}
         </div>
@@ -140,7 +134,12 @@ if (page.kind === 'articles') {
     <section class="empty-library section">
       <div class="page-shell">
         <p class="eyebrow">{locale === 'es' ? 'Estado editorial' : 'Editorial status'}</p>
-        {publishedArticles.length ? (
+        {articlesUnavailable ? (
+          <>
+            <h2>{locale === 'es' ? 'Los artículos no están disponibles en este momento.' : 'Articles are temporarily unavailable.'}</h2>
+            <p>{locale === 'es' ? 'Intenta nuevamente en unos segundos.' : 'Please try again in a few seconds.'}</p>
+          </>
+        ) : publishedArticles.length ? (
           <>
             <h2>{locale === 'es' ? 'Información publicada con revisión documentada.' : 'Information published with documented review.'}</h2>
             <div class="article-library-grid">
@@ -176,7 +175,6 @@ if (page.kind === 'articles') {
             <a href={item.href}>
               <span>{String(index + 1).padStart(2, '0')}</span>
               <div><h3>{item.title}</h3><p>{item.text}</p></div>
-              <b aria-hidden="true">→</b>
             </a>
           ))}
         </div>

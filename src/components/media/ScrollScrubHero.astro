@@ -36,7 +36,6 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         preload="auto"
         disablepictureinpicture
         tabindex="-1"
-        poster={poster.src}
         data-scroll-hero-video
         data-mobile-video-src={mobileVideoSrc}
         data-desktop-video-src={videoSrc}
@@ -59,7 +58,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           data-analytics-event="click_whatsapp"
           data-analytics-placement="hero"
         >{content.primary}</a>
-        <a class="text-link" href="#servicios">{content.secondary}<span aria-hidden="true"> →</span></a>
+        <a class="text-link" href="#servicios">{content.secondary}</a>
       </div>
       <p class="micro-note">{content.note}</p>
     </div>
@@ -84,8 +83,9 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       if (!(root instanceof HTMLElement) || !(video instanceof HTMLVideoElement)) return;
 
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const saveData = navigator.connection?.saveData === true;
-      if (reducedMotion || saveData || !video.canPlayType('video/mp4')) return;
+      const connection = navigator.connection;
+      const constrainedNetwork = connection?.saveData === true || /(^|-)2g$/.test(connection?.effectiveType || '');
+      if (reducedMotion || constrainedNetwork || !video.canPlayType('video/mp4')) return;
 
       const mobile = window.matchMedia('(max-width: 47.99rem)').matches;
       const source = mobile ? video.dataset.mobileVideoSrc : video.dataset.desktopVideoSrc;
@@ -121,7 +121,8 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       const transition = root.querySelector<HTMLElement>('.scroll-hero-transition');
       const poster = root.querySelector<HTMLElement>('.scroll-hero-poster');
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-      const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+      const constrainedNetwork = connection?.saveData === true || /(^|-)2g$/.test(connection?.effectiveType || '');
       const mobileQuery = window.matchMedia('(max-width: 47.99rem)');
       let timeline: gsap.core.Timeline | undefined;
       let resizeTimer = 0;
@@ -135,7 +136,11 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       let videoReady = false;
       let fallbackApplied = false;
       let activationStarted = false;
+      // playhead es la posición real del video. En escritorio la mueve el timeline
+      // de GSAP (con suavizado); en móvil, el scroll nativo, que responde mejor al
+      // desplazamiento inercial. Así nunca hay dos fuentes escribiendo a la vez.
       const playhead = { progress: 0 };
+      const desktopScrub = { progress: 0 };
       const sourceFrameDuration = 1 / 24;
 
       const destroyTimeline = () => {
@@ -221,10 +226,14 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         });
 
         timeline
-          .to(playhead, {
+          .to(desktopScrub, {
             progress: 1,
             duration: 1,
-            onUpdate: queueCurrentFrame,
+            onUpdate: () => {
+              if (mobileQuery.matches) return;
+              playhead.progress = desktopScrub.progress;
+              queueCurrentFrame();
+            },
           }, 0)
           .to(cue, { autoAlpha: 0, duration: 0.18 }, 0.08)
           .to(copy, { autoAlpha: 0, y: -12, duration: 0.1 }, 0.4)
@@ -266,18 +275,12 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
         if (!video || activationStarted || fallbackApplied) return;
         activationStarted = true;
         window.clearTimeout(loadTimer);
-        let settled = false;
-        const finish = () => {
-          if (settled || fallbackApplied) return;
-          settled = true;
-          video.pause();
-          videoReady = true;
-          drawCurrentFrame();
-          root.dataset.heroState = 'ready';
-          queueCurrentFrame();
-        };
-
-        finish();
+        video.pause();
+        videoReady = true;
+        drawCurrentFrame();
+        root.dataset.heroState = 'ready';
+        syncFrameFromNativeScroll();
+        queueCurrentFrame();
       };
 
       const onMetadata = () => {
@@ -322,7 +325,7 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
       window.addEventListener('scroll', onNativeScroll, { passive: true });
       reducedMotion.addEventListener('change', onReducedMotionChange);
 
-      if (!video || saveData || !video.canPlayType('video/mp4')) {
+      if (!video || constrainedNetwork || !video.canPlayType('video/mp4')) {
         showFallback();
       } else {
         const selectedVideoSrc = mobileQuery.matches ? video.dataset.mobileVideoSrc : video.dataset.desktopVideoSrc;
@@ -343,24 +346,8 @@ const { locale, content, poster, videoSrc, mobileVideoSrc } = Astro.props;
           else video.addEventListener('loadedmetadata', onMetadata, { once: true });
         }
       }
-
-      document.addEventListener('astro:before-swap', () => {
-        window.clearTimeout(loadTimer);
-        window.clearTimeout(resizeTimer);
-        if (seekFrame) cancelAnimationFrame(seekFrame);
-        if (nativeScrollFrame) cancelAnimationFrame(nativeScrollFrame);
-        destroyTimeline();
-        window.removeEventListener('resize', refresh);
-        window.removeEventListener('orientationchange', refreshOrientation);
-        window.removeEventListener('scroll', onNativeScroll);
-        reducedMotion.removeEventListener('change', onReducedMotionChange);
-        video?.removeEventListener('seeked', onSeeked);
-        video?.removeEventListener('loadeddata', onPlayable);
-        video?.removeEventListener('canplay', onPlayable);
-      }, { once: true });
     });
   };
 
   initializeScrollHeroes();
-  document.addEventListener('astro:page-load', initializeScrollHeroes);
 </script>

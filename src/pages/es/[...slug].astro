@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { draftPagesNoindex } from '@/lib/site';
 import InnerPage from '@/components/content/InnerPage.astro';
 import { innerPages, type InnerPageContent } from '@/data/innerPages';
 
@@ -13,6 +14,6 @@ const { page } = Astro.props;
 const pathname = `/es/${page.slug}/`;
 const alternatePathname = `/en/${page.alternateSlug}/`;
 ---
-<BaseLayout locale="es" title={`${page.title} | Dr. Ronald Salazar`} description={page.description} {pathname} {alternatePathname} skipText="Saltar al contenido principal" noindex={true}>
+<BaseLayout locale="es" title={`${page.title} | Dr. Ronald Salazar`} description={page.description} {pathname} {alternatePathname} skipText="Saltar al contenido principal" noindex={draftPagesNoindex}>
   <InnerPage locale="es" {page} {pathname} />
 </BaseLayout>

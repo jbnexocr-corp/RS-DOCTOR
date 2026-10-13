@@ -15,20 +15,36 @@ interface Props {
   alternatePathname: string;
   skipText: string;
   noindex?: boolean;
+  alternateIsTranslation?: boolean;
 }
 const props = Astro.props;
+// GA4 solo se activa cuando la clínica entrega un ID aprobado (ver ANALYTICS.md).
+const ga4Id = (process.env.PUBLIC_GA4_ID || import.meta.env.PUBLIC_GA4_ID || '').trim();
+const analyticsId = /^G-[A-Z0-9]{4,20}$/.test(ga4Id) ? ga4Id : undefined;
 ---
 
 <!doctype html>
 <html lang={props.locale}>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f4f0e8" />
     <meta name="color-scheme" content="light" />
+    <meta name="format-detection" content="telephone=no" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <SEO {...props} />
     <StructuredData locale={props.locale} pathname={props.pathname} />
+    {analyticsId && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}></script>
+        <script is:inline define:vars={{ analyticsId }}>
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function gtag() { window.dataLayer.push(arguments); };
+          window.gtag('js', new Date());
+          window.gtag('config', analyticsId, { allow_google_signals: false, allow_ad_personalization_signals: false });
+        </script>
+      </>
+    )}
   </head>
   <body>
     <a class="skip-link" href="#main-content">{props.skipText}</a>

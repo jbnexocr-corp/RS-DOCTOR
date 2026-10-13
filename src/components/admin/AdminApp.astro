@@ -1,14 +1,8 @@
 ---
-import { serviceDetails } from '@/data/serviceDetails';
-import { innerPages } from '@/data/innerPages';
+import { buildSeedRecords } from '@/lib/admin/seed';
 
-const now = new Date().toISOString();
 const databaseMode = Boolean(process.env.DATABASE_URL);
-const initialRecords = [
-  ...serviceDetails.es.map((item) => ({ id: `service-${item.slug}`, collection: 'services', locale: 'es', status: item.reviewStatus, title: item.title, slug: item.slug, summary: item.summary, updatedAt: now, notes: 'La versión en inglés está relacionada mediante alternateSlug.' })),
-  ...serviceDetails.en.map((item) => ({ id: `service-en-${item.slug}`, collection: 'services', locale: 'en', status: item.reviewStatus, title: item.title, slug: item.slug, summary: item.summary, updatedAt: now, notes: 'English counterpart prepared for human review.' })),
-  ...innerPages.es.map((item) => ({ id: `page-${item.slug.replaceAll('/', '-')}`, collection: item.kind === 'articles' ? 'articles' : item.kind === 'resource' ? 'resources' : 'pages', locale: 'es', status: 'draft', title: item.title, slug: item.slug, summary: item.description, updatedAt: now, notes: item.pending ?? '' })),
-];
+const initialRecords = buildSeedRecords();
 ---
 
 <div class="admin-shell" data-admin-app data-admin-mode={databaseMode ? 'database' : 'local'} data-seed={JSON.stringify(initialRecords)}>
@@ -31,7 +25,7 @@ const initialRecords = [
   <main class="admin-main">
     <header class="admin-topbar">
       <div><p>Dr. Ronald Salazar</p><h1>Panel de administración</h1></div>
-      <div class="admin-top-actions"><span id="save-indicator" role="status">Todo guardado</span><button class="admin-primary" type="button" data-new-record>Nuevo contenido</button><form method="post" action="/api/auth/logout/"><button class="secondary-button" type="submit">Cerrar sesión</button></form></div>
+      <div class="admin-top-actions"><span id="save-indicator" role="status">Cargando…</span><button class="admin-primary" type="button" data-new-record>Nuevo contenido</button><form method="post" action="/api/auth/logout/"><button class="secondary-button" type="submit">Cerrar sesión</button></form></div>
     </header>
 
     <section class="admin-view" data-panel="dashboard">
@@ -49,7 +43,7 @@ const initialRecords = [
         </article>
       </div>
       <article class="admin-card audit-card">
-        <div class="card-heading"><h3>Registro de actividad</h3><button type="button" class="text-button" id="clear-audit">Limpiar</button></div>
+        <div class="card-heading"><h3>Registro de actividad</h3>{!databaseMode && <button type="button" class="text-button" id="clear-audit">Limpiar</button>}</div>
         <div id="audit-list" class="audit-list"></div>
       </article>
     </section>
@@ -71,7 +65,7 @@ const initialRecords = [
     </section>
 
     <section class="admin-view" data-panel="settings" hidden>
-      <div class="admin-section-heading"><div><p class="admin-kicker">Preparación técnica</p><h2>Configuración</h2></div><p>Estos valores quedan listos para migrarse a variables de entorno o al CMS.</p></div>
+      <div class="admin-section-heading"><div><p class="admin-kicker">Preparación técnica</p><h2>Configuración</h2></div><p>Datos de referencia y lista de verificación para la entrega. No modifican el sitio público: el contacto se edita en el código y el dominio y Analytics se configuran en las variables de Railway.</p></div>
       <form id="settings-form" class="settings-grid">
         <fieldset class="admin-card"><legend>Identidad y dominio</legend><label>Nombre del sitio<input name="siteName" value="Dr. Ronald Salazar" /></label><label>Descriptor<input name="descriptor" value="Ginecología Integral" /></label><label>URL pública<input name="siteUrl" type="url" placeholder="https://dominio.com" /></label><label>Idioma predeterminado<select name="defaultLocale"><option value="es">Español</option><option value="en">English</option></select></label></fieldset>
         <fieldset class="admin-card"><legend>Contacto y medición</legend><label>WhatsApp<input name="whatsapp" placeholder="Pendiente" /></label><label>Teléfono<input name="phone" placeholder="Pendiente" /></label><label>Correo destinatario<input name="recipient" type="email" placeholder="Pendiente" /></label><label>Google Analytics ID<input name="analyticsId" placeholder="G-XXXXXXXXXX" /></label></fieldset>
@@ -85,9 +79,9 @@ const initialRecords = [
       <div class="backup-grid">
         <article class="admin-card"><h3>Exportar copia completa</h3><p>Descarga contenido, configuración e historial como JSON portable.</p><button class="admin-primary" type="button" id="export-data">Descargar respaldo</button></article>
         <article class="admin-card"><h3>Importar respaldo</h3><p>Restaura un archivo exportado por este panel. Se valida antes de reemplazar datos.</p><label class="file-button">Seleccionar archivo<input type="file" id="import-data" accept="application/json" /></label></article>
-        <article class="admin-card danger-card"><h3>Restablecer contenido</h3><p>{databaseMode ? 'Reemplaza los registros actuales de PostgreSQL por el contenido inicial.' : 'Recupera el contenido inicial del proyecto y elimina las ediciones de este navegador.'}</p><button type="button" class="danger-button" id="reset-data">Restablecer</button></article>
+        <article class="admin-card danger-card"><h3>Restablecer contenido</h3><p>{databaseMode ? 'Reemplaza los registros actuales de PostgreSQL por el contenido inicial. La configuración se conserva.' : 'Recupera el contenido inicial del proyecto y elimina las ediciones de este navegador.'}</p><button type="button" class="danger-button" id="reset-data">Restablecer</button></article>
       </div>
-      <article class="admin-card integration-card"><p class="admin-kicker">Infraestructura</p><h3>{databaseMode ? 'PostgreSQL y Railway Bucket conectados' : 'Modo local de desarrollo'}</h3><p>{databaseMode ? 'Los registros se sincronizan mediante una API protegida y las imágenes se almacenan fuera de la base de datos.' : 'Al configurar Railway, el mismo panel cambia automáticamente a persistencia PostgreSQL y almacenamiento de objetos.'}</p><code>ContentRepository: list · get · create · update · remove · export</code></article>
+      <article class="admin-card integration-card"><p class="admin-kicker">Infraestructura</p><h3>{databaseMode ? 'PostgreSQL y Railway Bucket conectados' : 'Modo local de desarrollo'}</h3><p>{databaseMode ? 'Cada cambio se guarda individualmente mediante una API protegida y las imágenes se almacenan fuera de la base de datos.' : 'Al configurar Railway, el mismo panel cambia automáticamente a persistencia PostgreSQL y almacenamiento de objetos.'}</p><code>API: /api/admin/content · /api/admin/settings · /api/admin/media · /api/admin/state</code></article>
     </section>
   </main>
 
@@ -99,7 +93,7 @@ const initialRecords = [
         <label>Colección<select name="collection" required><option value="pages">Página</option><option value="services">Servicio</option><option value="articles">Artículo</option><option value="team">Equipo</option><option value="locations">Ubicación</option><option value="resources">Recurso</option><option value="media">Medio / imagen</option></select></label>
         <label>Idioma<select name="locale" required><option value="es">Español</option><option value="en">English</option></select></label>
         <label class="record-wide">Título<input name="title" required maxlength="120" /></label>
-        <label>Slug<input name="slug" required pattern="[a-z0-9]+(?:[a-z0-9\-/]*[a-z0-9])?" /></label>
+        <label>Slug<input name="slug" required maxlength="180" autocapitalize="none" spellcheck="false" title="Solo minúsculas, números, guiones y barras; sin espacios ni acentos." pattern="[a-z0-9]+(?:[a-z0-9\-\/]*[a-z0-9])?" /></label>
         <label>Estado<select name="status" required><option value="draft">Borrador</option><option value="pending-medical-review">Revisión médica pendiente</option><option value="approved">Aprobado</option><option value="published">Publicado</option><option value="archived">Archivado</option></select></label>
         <label class="record-wide">Resumen<textarea name="summary" rows="4" required></textarea></label>
         <label class="record-wide">Contenido principal<textarea name="body" rows="10" placeholder="Texto completo del artículo o contenido editorial"></textarea></label>
@@ -110,6 +104,7 @@ const initialRecords = [
         <label class="record-wide">Notas editoriales<textarea name="notes" rows="4"></textarea></label>
         <label class="record-wide">Texto alternativo de imagen<input name="altText" maxlength="180" placeholder="Describe la imagen para quien no puede verla" /></label>
         <label class="record-wide media-upload">Archivo de imagen<input name="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /><small>{databaseMode ? 'Railway Bucket: JPEG, PNG, WebP o AVIF; máximo 8 MB.' : 'Modo local: máximo 1 MB. El archivo se incluirá en el respaldo JSON.'}</small></label>
+        <label class="record-wide remove-image" data-remove-image hidden><input type="checkbox" name="removeImage" /> Quitar la imagen actual</label>
         <input type="hidden" name="imageData" />
         <input type="hidden" name="imageKey" />
       </div>
@@ -123,17 +118,24 @@ const initialRecords = [
 
 <script>
   type RecordItem = { id: string; collection: string; locale: string; status: string; title: string; slug: string; summary: string; body?: string; updatedAt: string; notes: string; author?: string; medicalReviewer?: string; reviewDate?: string; sources?: string; altText?: string; imageData?: string; imageKey?: string };
-  type AdminState = { version: number; records: RecordItem[]; settings: Record<string, string | boolean>; audit: Array<{ id: string; message: string; at: string }> };
+  type AuditItem = { id: string; message: string; at: string };
+  type AdminState = { version: number; records: RecordItem[]; settings: Record<string, string | boolean>; audit: AuditItem[]; seeded?: boolean };
+
+  class RequestError extends Error {
+    constructor(message: string, readonly status: number) { super(message); }
+  }
+
   const app = document.querySelector<HTMLElement>('[data-admin-app]');
   if (app) {
     const storageKey = 'ronald-salazar-admin-v1';
     const remoteMode = app.dataset.adminMode === 'database';
     const seed = JSON.parse(app.dataset.seed || '[]') as RecordItem[];
-    const defaultState: AdminState = { version: 2, records: seed, settings: {}, audit: [{ id: crypto.randomUUID(), message: remoteMode ? 'Panel conectado a PostgreSQL' : 'Panel local inicializado', at: new Date().toISOString() }] };
-    let state: AdminState = structuredClone(defaultState);
-    if (!remoteMode) {
-      try { state = JSON.parse(localStorage.getItem(storageKey) || '') as AdminState; if (!state?.records) throw new Error(); } catch { state = structuredClone(defaultState); }
-    }
+    const initialLocalState = (): AdminState => ({ version: 3, records: structuredClone(seed), settings: {}, audit: [{ id: crypto.randomUUID(), message: 'Panel local inicializado', at: new Date().toISOString() }] });
+    let state: AdminState = { version: 3, records: [], settings: {}, audit: [] };
+    // Hasta que la carga inicial funcione no se permite ningún cambio: así un
+    // fallo temporal nunca termina sobrescribiendo la base con datos vacíos.
+    let ready = false;
+    let busy = false;
 
     const $ = <T extends Element>(selector: string) => app.querySelector<T>(selector);
     const $$ = <T extends Element>(selector: string) => [...app.querySelectorAll<T>(selector)];
@@ -144,40 +146,95 @@ const initialRecords = [
     const form = $('#record-form') as HTMLFormElement;
     const settingsForm = $('#settings-form') as HTMLFormElement;
     const toast = $('#admin-toast') as HTMLElement;
-    const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 12_000) => {
+    const indicator = $('#save-indicator') as HTMLElement;
+    const dateFormat = new Intl.DateTimeFormat('es-CR', { dateStyle: 'medium', timeStyle: 'short' });
+    let toastTimer = 0;
+
+    const escapeHtml = (value: string) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char] || char);
+    const formatDate = (value: string) => { const date = new Date(value); return Number.isNaN(date.getTime()) ? '—' : dateFormat.format(date); };
+    const showToast = (message: string) => { toast.textContent = message; toast.classList.add('is-visible'); window.clearTimeout(toastTimer); toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 3200); };
+    const errorMessage = (error: unknown) => error instanceof Error && error.message ? error.message : 'No se pudo completar la acción.';
+
+    const request = async <T,>(input: string, init: RequestInit = {}, timeoutMs = 12_000): Promise<T> => {
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-      try { return await fetch(input, { ...init, signal: controller.signal }); }
+      let response: Response;
+      try { response = await fetch(input, { ...init, signal: controller.signal }); }
+      catch { throw new RequestError('No hubo respuesta del servidor. Revisa la conexión e inténtalo de nuevo.', 0); }
       finally { window.clearTimeout(timer); }
+      const body = response.status === 204 ? undefined : await response.json().catch(() => undefined);
+      if (response.status === 401) {
+        window.setTimeout(() => { location.href = `/admin/login/?next=${encodeURIComponent(location.pathname)}`; }, 1800);
+      }
+      if (!response.ok) throw new RequestError(body?.error || 'No se pudo completar la acción.', response.status);
+      return body as T;
     };
+    const jsonRequest = <T,>(input: string, method: string, payload: unknown) => request<T>(input, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
 
-    const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char] || char);
-    const persist = async (message?: string) => {
-      const indicator = $('#save-indicator');
-      if (indicator) indicator.textContent = 'Guardando…';
+    const loadRemote = async () => {
+      let remote = await request<AdminState>('/api/admin/state/');
+      if (!remote.seeded && !remote.records.length) {
+        await request('/api/admin/seed/', { method: 'POST' });
+        remote = await request<AdminState>('/api/admin/state/');
+      }
+      return remote;
+    };
+    const readLocal = (): AdminState => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '') as AdminState;
+        if (Array.isArray(saved?.records)) return { version: 3, records: saved.records, settings: saved.settings || {}, audit: Array.isArray(saved.audit) ? saved.audit : [] };
+      } catch { /* sin datos locales válidos */ }
+      return initialLocalState();
+    };
+    const writeLocal = (next: AdminState) => {
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); }
+      catch { throw new Error('El navegador no tiene espacio para guardar. Exporta un respaldo y elimina imágenes grandes.'); }
+    };
+    const addLocalAudit = (draft: AdminState, message: string) => { draft.audit.unshift({ id: crypto.randomUUID(), message, at: new Date().toISOString() }); draft.audit = draft.audit.slice(0, 60); };
+
+    /**
+     * Aplica un cambio. En modo base de datos se envía solo esa operación y luego
+     * se recarga el estado del servidor; en modo local se edita una copia. En
+     * ambos casos el estado visible cambia solo si el guardado tuvo éxito.
+     */
+    const commit = async (successMessage: string, remote: () => Promise<unknown>, local: (draft: AdminState) => void) => {
+      indicator.textContent = 'Guardando…';
       try {
         if (remoteMode) {
-          const response = await fetchWithTimeout('/api/admin/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) });
-          if (!response.ok) throw new Error((await response.json()).error || 'No se pudo guardar');
+          await remote();
+          state = await loadRemote();
         } else {
-          localStorage.setItem(storageKey, JSON.stringify(state));
+          const draft = structuredClone(state);
+          local(draft);
+          writeLocal(draft);
+          state = draft;
         }
-        if (indicator) indicator.textContent = 'Todo guardado';
-        if (message) showToast(message);
+        indicator.textContent = 'Todo guardado';
+        showToast(successMessage);
         renderAll();
+        return true;
       } catch (error) {
-        if (indicator) indicator.textContent = 'Error al guardar';
-        showToast(error instanceof Error ? error.message : 'No se pudo guardar');
+        indicator.textContent = 'Error al guardar';
+        showToast(errorMessage(error));
+        if (remoteMode && error instanceof RequestError && error.status === 409) {
+          try { state = await loadRemote(); renderAll(); indicator.textContent = 'Datos actualizados'; } catch { /* se mantiene el estado anterior */ }
+        }
+        return false;
       }
     };
-    const addAudit = (message: string) => { state.audit.unshift({ id: crypto.randomUUID(), message, at: new Date().toISOString() }); state.audit = state.audit.slice(0, 60); };
-    const showToast = (message: string) => { toast.textContent = message; toast.classList.add('is-visible'); setTimeout(() => toast.classList.remove('is-visible'), 2400); };
-    const formatDate = (value: string) => new Intl.DateTimeFormat('es-CR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+    const exclusive = async (task: () => Promise<unknown>) => {
+      if (!ready) { showToast('El panel no pudo cargar los datos. Recarga la página antes de hacer cambios.'); return; }
+      if (busy) return;
+      busy = true;
+      app.setAttribute('aria-busy', 'true');
+      try { await task(); } finally { busy = false; app.removeAttribute('aria-busy'); }
+    };
 
     function switchView(view: string) {
-      $$<HTMLElement>('[data-panel]').forEach((panel) => panel.hidden = panel.dataset.panel !== view);
-      $$<HTMLButtonElement>('[data-view]').forEach((button) => button.classList.toggle('is-active', button.dataset.view === view));
-      history.replaceState(null, '', `#${view}`);
+      const target = ['dashboard', 'content', 'settings', 'backup'].includes(view) ? view : 'dashboard';
+      $$<HTMLElement>('[data-panel]').forEach((panel) => panel.hidden = panel.dataset.panel !== target);
+      $$<HTMLButtonElement>('[data-view]').forEach((button) => button.classList.toggle('is-active', button.dataset.view === target));
+      history.replaceState(null, '', `#${target}`);
     }
 
     function renderMetrics() {
@@ -192,9 +249,9 @@ const initialRecords = [
     }
 
     function renderDashboard() {
-      const recent = [...state.records].sort((a,b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 6);
+      const recent = [...state.records].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 6);
       const recentList = $('#recent-list');
-      if (recentList) recentList.innerHTML = recent.map((item) => `<button type="button" data-edit="${escapeHtml(item.id)}"><span>${escapeHtml(item.title)}</span><small>${labels[item.collection] || item.collection} · ${statuses[item.status] || item.status}</small><b>${formatDate(item.updatedAt)}</b></button>`).join('');
+      if (recentList) recentList.innerHTML = recent.map((item) => `<button type="button" data-edit="${escapeHtml(item.id)}"><span>${escapeHtml(item.title)}</span><small>${labels[item.collection] || escapeHtml(item.collection)} · ${statuses[item.status] || escapeHtml(item.status)}</small><b>${formatDate(item.updatedAt)}</b></button>`).join('');
       const settingsReady = ['siteUrl','whatsapp','phone','recipient'].filter((key) => Boolean(state.settings[key])).length;
       const approvals = ['privacyApproved','termsApproved','imageRights','brandApproved','medicalWorkflow','searchConsole'].filter((key) => state.settings[key] === true).length;
       const approvedContent = state.records.length ? state.records.filter((item) => ['approved','published'].includes(item.status)).length / state.records.length : 0;
@@ -215,7 +272,7 @@ const initialRecords = [
 
     function renderTable() {
       const records = filteredRecords();
-      tableBody.innerHTML = records.map((item) => `<tr><td><div class="content-name">${item.imageData ? `<img src="${escapeHtml(item.imageData)}" alt="" />` : ''}<div><strong>${escapeHtml(item.title)}</strong><small>/${escapeHtml(item.slug)}/</small></div></div></td><td>${labels[item.collection] || escapeHtml(item.collection)}</td><td><span class="locale-pill">${escapeHtml(item.locale.toUpperCase())}</span></td><td><span class="status-pill status-${escapeHtml(item.status)}">${statuses[item.status] || escapeHtml(item.status)}</span></td><td>${formatDate(item.updatedAt)}</td><td><div class="row-actions"><button type="button" data-edit="${escapeHtml(item.id)}">Editar</button><button type="button" data-duplicate="${escapeHtml(item.id)}">Duplicar</button><button type="button" data-delete="${escapeHtml(item.id)}">Eliminar</button></div></td></tr>`).join('');
+      tableBody.innerHTML = records.map((item) => `<tr><td><div class="content-name">${item.imageData ? `<img src="${escapeHtml(item.imageData)}" alt="" />` : ''}<div><strong>${escapeHtml(item.title)}</strong><small>/${escapeHtml(item.slug)}/</small></div></div></td><td>${labels[item.collection] || escapeHtml(item.collection)}</td><td><span class="locale-pill">${escapeHtml(String(item.locale).toUpperCase())}</span></td><td><span class="status-pill status-${escapeHtml(item.status)}">${statuses[item.status] || escapeHtml(item.status)}</span></td><td>${formatDate(item.updatedAt)}</td><td><div class="row-actions"><button type="button" data-edit="${escapeHtml(item.id)}">Editar</button><button type="button" data-duplicate="${escapeHtml(item.id)}">Duplicar</button><button type="button" data-delete="${escapeHtml(item.id)}">Eliminar</button></div></td></tr>`).join('');
       const empty = $('#empty-state') as HTMLElement;
       empty.hidden = records.length > 0;
     }
@@ -231,16 +288,40 @@ const initialRecords = [
 
     function renderAll() { renderMetrics(); renderDashboard(); renderTable(); loadSettings(); }
 
+    const slugOwner = (record: Pick<RecordItem, 'id' | 'collection' | 'locale' | 'slug'>) => state.records.find((item) => item.id !== record.id && item.collection === record.collection && item.locale === record.locale && item.slug === record.slug);
+    const uniqueCopySlug = (source: RecordItem) => {
+      const taken = new Set(state.records.filter((item) => item.collection === source.collection && item.locale === source.locale).map((item) => item.slug));
+      let candidate = `${source.slug}-copia`;
+      for (let index = 2; taken.has(candidate); index += 1) candidate = `${source.slug}-copia-${index}`;
+      return candidate;
+    };
+    const recordPayload = (record: RecordItem, existing?: RecordItem) => existing
+      ? jsonRequest(`/api/admin/content/${encodeURIComponent(record.id)}/`, 'PATCH', { ...record, baseUpdatedAt: existing.updatedAt })
+      : jsonRequest('/api/admin/content/', 'POST', record);
+    const upsertLocal = (draft: AdminState, record: RecordItem) => {
+      const index = draft.records.findIndex((item) => item.id === record.id);
+      if (index >= 0) draft.records[index] = record; else draft.records.unshift(record);
+    };
+
     function openRecord(id?: string) {
+      if (!ready) { showToast('El panel no pudo cargar los datos. Recarga la página.'); return; }
       form.reset();
       ($('#dialog-title') as HTMLElement).textContent = id ? 'Editar contenido' : 'Nuevo contenido';
+      const removeImage = $('[data-remove-image]') as HTMLElement;
+      removeImage.hidden = true;
+      (form.elements.namedItem('id') as HTMLInputElement).value = '';
+      (form.elements.namedItem('imageData') as HTMLInputElement).value = '';
+      (form.elements.namedItem('imageKey') as HTMLInputElement).value = '';
       if (id) {
         const record = state.records.find((item) => item.id === id);
         if (!record) return;
-        Object.entries(record).forEach(([key, value]) => { const control = form.elements.namedItem(key); if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) control.value = String(value); });
+        Object.entries(record).forEach(([key, value]) => { const control = form.elements.namedItem(key); if ((control instanceof HTMLInputElement && control.type !== 'file') || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) control.value = String(value ?? ''); });
+        removeImage.hidden = !record.imageData;
       }
       dialog.showModal();
-      setTimeout(() => (form.elements.namedItem('title') as HTMLInputElement)?.focus(), 40);
+      // Foco inmediato: con un temporizador el foco podía saltar al título
+      // mientras la persona ya escribía en otro campo.
+      (form.elements.namedItem('title') as HTMLInputElement)?.focus();
     }
 
     app.addEventListener('click', (event) => {
@@ -253,76 +334,139 @@ const initialRecords = [
       if (target.dataset.edit) openRecord(target.dataset.edit);
       if (target.dataset.duplicate) {
         const source = state.records.find((item) => item.id === target.dataset.duplicate);
-        if (source) { const copy = { ...source, id: crypto.randomUUID(), title: `${source.title} — copia`, slug: `${source.slug}-copia`, status: 'draft', updatedAt: new Date().toISOString() }; state.records.unshift(copy); addAudit(`Duplicado: ${source.title}`); persist('Registro duplicado'); }
+        if (source) void exclusive(async () => {
+          const copy: RecordItem = { ...source, id: crypto.randomUUID(), title: `${source.title} — copia`.slice(0, 120), slug: uniqueCopySlug(source), status: 'draft', updatedAt: new Date().toISOString() };
+          await commit('Registro duplicado', () => recordPayload(copy), (draft) => { upsertLocal(draft, copy); addLocalAudit(draft, `Duplicado: ${source.title}`); });
+        });
       }
       if (target.dataset.delete) {
         const record = state.records.find((item) => item.id === target.dataset.delete);
-        if (record && confirm(`¿Eliminar “${record.title}”? Esta acción se registra en el historial.`)) { state.records = state.records.filter((item) => item.id !== record.id); addAudit(`Eliminado: ${record.title}`); persist('Registro eliminado'); }
+        if (record && confirm(`¿Eliminar “${record.title}”? Esta acción se registra en el historial.`)) void exclusive(() => commit(
+          'Registro eliminado',
+          () => request(`/api/admin/content/${encodeURIComponent(record.id)}/`, { method: 'DELETE' }),
+          (draft) => { draft.records = draft.records.filter((item) => item.id !== record.id); addLocalAudit(draft, `Eliminado: ${record.title}`); },
+        ));
       }
     });
 
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('submit', (event) => {
       event.preventDefault();
       if (!form.reportValidity()) return;
-      const data = Object.fromEntries(new FormData(form).entries()) as Record<string,string>;
-      const existing = state.records.find((item) => item.id === data.id);
-      const fileInput = form.elements.namedItem('imageFile') as HTMLInputElement;
-      let imageData = data.imageData || existing?.imageData || '';
-      const file = fileInput.files?.[0];
-      if (file) {
-        if (remoteMode) {
-          const upload = new FormData();
-          upload.set('file', file);
-          upload.set('altText', data.altText || '');
-          const response = await fetchWithTimeout('/api/admin/media', { method: 'POST', body: upload }, 30_000);
-          const result = await response.json();
-          if (!response.ok) { showToast(result.error || 'No se pudo subir la imagen'); return; }
-          imageData = result.url;
-          data.imageKey = result.key;
-        } else {
-          if (file.size > 1024 * 1024) { showToast('La imagen supera el máximo local de 1 MB'); return; }
-          imageData = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); });
+      void exclusive(async () => {
+        const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+        const existing = state.records.find((item) => item.id === data.id);
+        const record: RecordItem = { id: data.id || crypto.randomUUID(), collection: data.collection, locale: data.locale, status: data.status, title: data.title.trim(), slug: data.slug.trim().toLowerCase(), summary: data.summary.trim(), body: data.body.trim(), notes: data.notes.trim(), author: data.author.trim(), medicalReviewer: data.medicalReviewer.trim(), reviewDate: data.reviewDate, sources: data.sources.trim(), altText: data.altText.trim(), imageData: data.imageData || '', imageKey: data.imageKey || '', updatedAt: new Date().toISOString() };
+        if (record.collection === 'articles' && record.slug.includes('/')) { showToast('El slug de un artículo no puede contener “/”.'); return; }
+        const owner = slugOwner(record);
+        if (owner) { showToast(`El slug “${record.slug}” ya lo usa “${owner.title}” en la misma colección e idioma.`); return; }
+        if (data.removeImage === 'on') { record.imageData = ''; record.imageKey = ''; }
+
+        const file = (form.elements.namedItem('imageFile') as HTMLInputElement).files?.[0];
+        let uploadedKey = '';
+        if (file) {
+          if (remoteMode) {
+            indicator.textContent = 'Subiendo imagen…';
+            const upload = new FormData();
+            upload.set('file', file);
+            upload.set('altText', record.altText || '');
+            try {
+              const result = await request<{ url: string; key: string }>('/api/admin/media/', { method: 'POST', body: upload }, 45_000);
+              record.imageData = result.url;
+              record.imageKey = result.key;
+              uploadedKey = result.key;
+            } catch (error) {
+              indicator.textContent = 'Error al guardar';
+              showToast(errorMessage(error));
+              return;
+            }
+          } else {
+            if (file.size > 1024 * 1024) { showToast('La imagen supera el máximo local de 1 MB'); return; }
+            record.imageData = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file); });
+            record.imageKey = '';
+          }
         }
-      }
-      const record: RecordItem = { id: data.id || crypto.randomUUID(), collection: data.collection, locale: data.locale, status: data.status, title: data.title.trim(), slug: data.slug.trim().toLowerCase(), summary: data.summary.trim(), body: data.body.trim(), notes: data.notes.trim(), author: data.author.trim(), medicalReviewer: data.medicalReviewer.trim(), reviewDate: data.reviewDate, sources: data.sources.trim(), altText: data.altText.trim(), imageData, imageKey: data.imageKey || existing?.imageKey || '', updatedAt: new Date().toISOString() };
-      if (existing) Object.assign(existing, record); else state.records.unshift(record);
-      addAudit(`${existing ? 'Actualizado' : 'Creado'}: ${record.title}`);
-      dialog.close(); await persist('Contenido guardado');
+
+        const saved = await commit('Contenido guardado', () => recordPayload(record, existing), (draft) => { upsertLocal(draft, record); addLocalAudit(draft, `${existing ? 'Actualizado' : 'Creado'}: ${record.title}`); });
+        if (saved) dialog.close();
+        else if (uploadedKey) void request(`/api/admin/media/?key=${encodeURIComponent(uploadedKey)}`, { method: 'DELETE' }).catch(() => undefined);
+      });
     });
 
     settingsForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      const data = new FormData(settingsForm);
-      [...settingsForm.elements].forEach((control) => { if (control instanceof HTMLInputElement && control.type === 'checkbox') state.settings[control.name] = control.checked; });
-      data.forEach((value, key) => state.settings[key] = String(value));
-      addAudit('Configuración actualizada'); persist('Configuración guardada');
+      if (!settingsForm.reportValidity()) return;
+      const settings: Record<string, string | boolean> = {};
+      [...settingsForm.elements].forEach((control) => {
+        if (control instanceof HTMLInputElement && control.type === 'checkbox') settings[control.name] = control.checked;
+        else if ((control instanceof HTMLInputElement || control instanceof HTMLSelectElement) && control.name) settings[control.name] = control.value.trim();
+      });
+      void exclusive(() => commit('Configuración guardada', () => jsonRequest('/api/admin/settings/', 'PUT', settings), (draft) => { draft.settings = settings; addLocalAudit(draft, 'Configuración actualizada'); }));
     });
 
+    (form.elements.namedItem('slug') as HTMLInputElement).addEventListener('input', (event) => {
+      const input = event.currentTarget as HTMLInputElement;
+      const lower = input.value.toLowerCase();
+      if (lower !== input.value) { const position = input.selectionStart; input.value = lower; input.setSelectionRange(position, position); }
+    });
     ['content-search','collection-filter','status-filter'].forEach((id) => $(`#${id}`)?.addEventListener('input', renderTable));
-    $('#clear-audit')?.addEventListener('click', () => { if (confirm(remoteMode ? '¿Limpiar el registro de actividad?' : '¿Limpiar el registro de actividad local?')) { state.audit = []; persist('Historial limpiado'); } });
-    $('#export-data')?.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `dr-ronald-admin-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(url); addAudit('Respaldo exportado'); persist('Respaldo descargado');
+    $('#clear-audit')?.addEventListener('click', () => {
+      if (confirm('¿Limpiar el registro de actividad local?')) void exclusive(() => commit('Historial limpiado', async () => undefined, (draft) => { draft.audit = []; }));
     });
+    $('#export-data')?.addEventListener('click', () => void exclusive(async () => {
+      try {
+        const snapshot = remoteMode ? await loadRemote() : state;
+        const blob = new Blob([JSON.stringify({ ...snapshot, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `dr-ronald-admin-${new Date().toISOString().slice(0,10)}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1_000);
+        showToast('Respaldo descargado');
+      } catch (error) { showToast(errorMessage(error)); }
+    }));
     $('#import-data')?.addEventListener('change', async (event) => {
-      const input = event.currentTarget as HTMLInputElement; const file = input.files?.[0]; if (!file) return;
-      try { const imported = JSON.parse(await file.text()) as AdminState; if (!Array.isArray(imported.records) || typeof imported.settings !== 'object') throw new Error(); state = imported; addAudit('Respaldo importado'); persist('Respaldo restaurado'); } catch { showToast('El archivo no es un respaldo válido'); } finally { input.value = ''; }
+      const input = event.currentTarget as HTMLInputElement;
+      const file = input.files?.[0];
+      if (!file) return;
+      let imported: AdminState;
+      try {
+        imported = JSON.parse(await file.text()) as AdminState;
+        const validRecords = Array.isArray(imported.records) && imported.records.every((item) => item && typeof item.id === 'string' && typeof item.title === 'string' && typeof item.slug === 'string');
+        if (!validRecords || (imported.settings !== undefined && typeof imported.settings !== 'object')) throw new Error();
+      } catch {
+        showToast('El archivo no es un respaldo válido');
+        input.value = '';
+        return;
+      } finally { input.value = ''; }
+      if (!confirm(`¿Reemplazar todo el contenido actual por los ${imported.records.length} registros del respaldo?`)) return;
+      const records = imported.records.map((item) => ({ ...item, updatedAt: Number.isNaN(Date.parse(item.updatedAt)) ? new Date().toISOString() : item.updatedAt }));
+      void exclusive(() => commit(
+        'Respaldo restaurado',
+        () => jsonRequest('/api/admin/state/', 'PUT', { mode: 'import', records, settings: imported.settings }),
+        (draft) => { draft.records = records; draft.settings = imported.settings || draft.settings; addLocalAudit(draft, 'Respaldo importado'); },
+      ));
     });
-    $('#reset-data')?.addEventListener('click', () => { if (confirm(remoteMode ? '¿Reemplazar el contenido de PostgreSQL por los datos iniciales? Exporta una copia antes.' : '¿Restablecer todos los datos locales? Exporta una copia antes si deseas conservarlos.')) { state = structuredClone(defaultState); persist('Datos iniciales restaurados'); } });
-    window.addEventListener('hashchange', () => switchView(location.hash.slice(1) || 'dashboard'));
+    $('#reset-data')?.addEventListener('click', () => {
+      if (!confirm(remoteMode ? '¿Reemplazar el contenido de PostgreSQL por los datos iniciales? Exporta una copia antes.' : '¿Restablecer todos los datos locales? Exporta una copia antes si deseas conservarlos.')) return;
+      void exclusive(() => commit(
+        'Datos iniciales restaurados',
+        () => jsonRequest('/api/admin/state/', 'PUT', { mode: 'reset' }),
+        (draft) => { const fresh = initialLocalState(); draft.records = fresh.records; draft.settings = {}; draft.audit = fresh.audit; },
+      ));
+    });
+    window.addEventListener('hashchange', () => switchView(location.hash.slice(1)));
+
     const initialize = async () => {
-      if (remoteMode) {
-        try {
-          const response = await fetchWithTimeout('/api/admin/state');
-          if (!response.ok) throw new Error('No se pudo conectar con PostgreSQL');
-          const remoteState = await response.json() as AdminState;
-          state = remoteState.records.length ? remoteState : structuredClone(defaultState);
-          if (!remoteState.records.length) await persist('Contenido inicial importado a PostgreSQL');
-        } catch (error) {
-          showToast(error instanceof Error ? error.message : 'Error de conexión');
-        }
+      switchView(location.hash.slice(1));
+      try {
+        state = remoteMode ? await loadRemote() : readLocal();
+        ready = true;
+        indicator.textContent = 'Todo guardado';
+      } catch (error) {
+        indicator.textContent = 'Sin conexión';
+        showToast(`${errorMessage(error)} Recarga la página para intentarlo de nuevo.`);
       }
-      switchView(location.hash.slice(1) || 'dashboard');
       renderAll();
     };
     void initialize();

@@ -1,10 +1,13 @@
 import type { APIRoute } from 'astro';
 import { readMedia } from '@/lib/server/storage';
 
+// Solo se entregan imágenes subidas desde el panel, nunca otros objetos del Bucket.
+const validKey = /^media\/[\w\-./]+$/;
+
 export const GET: APIRoute = async ({ params }) => {
   try {
     const key = params.key;
-    if (!key || key.includes('..')) return new Response('Not found', { status: 404 });
+    if (!key || !validKey.test(key) || key.includes('..')) return new Response('Not found', { status: 404 });
     const object = await readMedia(key);
     if (!object.Body) return new Response('Not found', { status: 404 });
     const body = object.Body.transformToWebStream();

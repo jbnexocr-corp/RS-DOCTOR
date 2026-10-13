@@ -4,12 +4,13 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, follow" />
     <title>Dr. Ronald Salazar</title>
     <script is:inline>
       (() => {
-        const saved = localStorage.getItem('site-language-preference');
+        let saved = null;
+        try { saved = localStorage.getItem('site-language-preference'); } catch { /* almacenamiento bloqueado */ }
         const locale = saved === 'es' || saved === 'en' ? saved : (navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en';
         location.replace(`/${locale}/`);
       })();

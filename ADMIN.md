@@ -19,12 +19,21 @@ El middleware protege `/admin/` y `/api/admin/` mediante un formulario propio. L
 
 Variables requeridas: `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH` y `ADMIN_SESSION_SECRET`. Para rotar la contraseña, ejecutar `npm run admin:hash-password` y reemplazar únicamente el hash en Railway. El login limita los intentos fallidos y el panel incluye cierre de sesión.
 
+## Cómo guarda el panel
+
+Cada acción (crear, editar, duplicar, eliminar, configuración) envía solo ese cambio y después recarga el estado del servidor. Si el guardado falla, la pantalla no cambia y el editor queda abierto con el mensaje del error. Si al abrir el panel no se puede leer PostgreSQL, el panel queda bloqueado para cambios hasta recargar, de modo que un fallo temporal nunca sobrescribe la base. El registro de actividad lo escribe el servidor y conserva los últimos 500 eventos.
+
 ## API
 
-- `GET/PUT /api/admin/state`: respaldo o restauración completa y configuración.
-- `GET/POST /api/admin/content`: listar y crear contenido.
-- `GET/PATCH/DELETE /api/admin/content/{id}`: CRUD individual.
-- `POST /api/admin/media`: carga autenticada de imágenes.
+Todas las rutas terminan en `/` (el sitio usa `trailingSlash: always`; sin la barra final, un POST redirigido se convertiría en GET).
+
+- `GET /api/admin/state/`: contenido, configuración y registro de actividad.
+- `PUT /api/admin/state/`: reemplazo completo, solo para `{ mode: "import" }` (restaurar respaldo) o `{ mode: "reset" }` (contenido inicial).
+- `POST /api/admin/seed/`: importa el contenido inicial una sola vez.
+- `GET/POST /api/admin/content/`: listar y crear contenido.
+- `GET/PATCH/DELETE /api/admin/content/{id}/`: CRUD individual. `PATCH` acepta `baseUpdatedAt` y responde 409 si otra sesión cambió el registro.
+- `PUT /api/admin/settings/`: configuración de referencia.
+- `POST /api/admin/media/`: carga autenticada de imágenes. `DELETE /api/admin/media/?key=` descarta una carga que no llegó a guardarse.
 - `GET /api/media/{key}`: entrega pública y cacheada del archivo privado.
 - `GET /api/health/`: estado del servidor, PostgreSQL y Bucket.
 

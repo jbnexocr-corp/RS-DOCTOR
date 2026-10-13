@@ -31,7 +31,8 @@ Se usan documentos separados por idioma y una relación explícita de alternas. 
 ## Renderizado
 
 - Páginas informativas: generación estática.
-- Contenido de Sanity: consultado durante build, con webhooks de reconstrucción en producción.
+- Artículos: SSR desde PostgreSQL con caché en memoria de 60 segundos; la página fija el estado HTTP real (200, 404 o 503).
+- Panel `/admin/`: SSR protegido; cada cambio se guarda por separado mediante `/api/admin/*`.
 - Formulario futuro: endpoint de servidor aislado, validación compartida, honeypot y rate limiting.
 
 ## Imágenes

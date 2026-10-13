@@ -2,14 +2,16 @@
 import type { Locale } from '@/lib/i18n';
 import { socialLinks } from '@/data/social';
 import { formatPlaceholder } from '@/lib/placeholders';
+import type { ComponentProps } from 'astro/types';
+import BrandIcon from '@/components/icons/BrandIcon.astro';
 
 interface Props { locale: Locale; variant?: 'footer' | 'contact' }
 const { locale, variant = 'footer' } = Astro.props;
 const entries = Object.entries(socialLinks);
-const marks: Record<string, string> = { instagram: 'IG', tiktok: 'TT', whatsappChannel: 'WA', facebook: 'FB' };
+const icons: Record<string, ComponentProps<typeof BrandIcon>['name']> = { instagram: 'instagram', tiktok: 'tiktok', whatsappChannel: 'whatsapp', facebook: 'facebook' };
 ---
 
-<div class:list={['social-links', `social-links-${variant}`]} aria-label={locale === 'es' ? 'Redes sociales y contacto' : 'Social media and contact'}>
+<div class:list={['social-links', `social-links-${variant}`]} role="group" aria-label={locale === 'es' ? 'Redes sociales y contacto' : 'Social media and contact'}>
   {entries.map(([key, item]) => (
     <a
       class:list={['social-link', { 'social-link-placeholder': item.placeholder }]}
@@ -21,14 +23,13 @@ const marks: Record<string, string> = { instagram: 'IG', tiktok: 'TT', whatsappC
         ? formatPlaceholder(`${item.label} — enlace temporal dirigido a Instagram`, locale)
         : `${item.label} — Dr. Ronald Salazar`}
     >
-      <span class="social-link-mark" aria-hidden="true">{marks[key]}</span>
+      <span class="social-link-mark"><BrandIcon name={icons[key]} /></span>
       <span>
         <strong>{item.placeholder ? formatPlaceholder(item.label, locale) : item.label}</strong>
         {variant === 'contact' && <small>{item.placeholder
           ? formatPlaceholder(locale === 'es' ? 'Enlace temporal; canal oficial pendiente' : 'Temporary link; official channel pending', locale)
           : item.handle}</small>}
       </span>
-      <b aria-hidden="true">↗</b>
     </a>
   ))}
 </div>

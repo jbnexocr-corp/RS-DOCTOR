@@ -45,18 +45,21 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
     currentTime: element.currentTime,
     paused: element.paused,
   }));
-  const afterPixels = await canvas.evaluate((element: HTMLCanvasElement) => {
-    const probe = document.createElement('canvas');
-    probe.width = 96;
-    probe.height = 54;
-    const context = probe.getContext('2d', { willReadFrequently: true });
-    context?.drawImage(element, 0, 0, probe.width, probe.height);
-    return context ? Array.from(context.getImageData(0, 0, probe.width, probe.height).data) : [];
-  });
   expect(after.currentTime).toBeGreaterThan(before.currentTime + 0.5);
   expect(after.paused).toBe(true);
-  const visualDifference = beforePixels.reduce((total, channel, index) => total + Math.abs(channel - afterPixels[index]), 0) / beforePixels.length;
-  expect(visualDifference).toBeGreaterThan(2);
+  // currentTime cambia al asignarlo, pero el canvas se redibuja en el evento
+  // `seeked`; se espera ese redibujo en lugar de tomar una sola muestra.
+  await expect.poll(async () => {
+    const afterPixels = await canvas.evaluate((element: HTMLCanvasElement) => {
+      const probe = document.createElement('canvas');
+      probe.width = 96;
+      probe.height = 54;
+      const context = probe.getContext('2d', { willReadFrequently: true });
+      context?.drawImage(element, 0, 0, probe.width, probe.height);
+      return context ? Array.from(context.getImageData(0, 0, probe.width, probe.height).data) : [];
+    });
+    return beforePixels.reduce((total, channel, index) => total + Math.abs(channel - afterPixels[index]), 0) / beforePixels.length;
+  }, { timeout: 4_000 }).toBeGreaterThan(2);
 
   await hero.evaluate((element: HTMLElement) => {
     const distance = window.innerHeight * (window.innerWidth < 768 ? 1.3 : 1.7);
@@ -71,6 +74,19 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
   const transition = hero.locator('.scroll-hero-transition');
   await expect.poll(async () => Number(await transition.evaluate((element) => getComputedStyle(element).opacity))).toBeGreaterThan(0.4);
   await expect(transition).toHaveCSS('background-image', /linear-gradient/);
+});
+
+test('public pages use real brand icons and no decorative arrows', async ({ page }) => {
+  for (const path of ['/es/', '/es/contacto/', '/es/cirugia-ginecologica/', '/es/servicios/histeroscopia/']) {
+    await page.goto(path);
+    expect(await page.locator('body').innerText()).not.toMatch(/[→↗←↘]/);
+  }
+  await page.goto('/es/contacto/');
+  for (const network of ['instagram', 'tiktok', 'whatsappChannel', 'facebook']) {
+    await expect(page.locator(`.social-links-contact [data-social="${network}"] svg.brand-icon`)).toHaveCount(1);
+  }
+  await expect(page.locator('.contact-action-primary svg.brand-icon')).toHaveCount(1);
+  await expect(page.locator('.social-link-mark').first()).not.toContainText(/[A-Z]{2}/);
 });
 
 test('header hides while scrolling down and returns while scrolling up', async ({ page }) => {
@@ -217,12 +233,15 @@ test('deployment endpoints expose health, robots and dynamic sitemap', async ({ 
   expect(sitemapXml).toContain('/es/articulos/');
 });
 
-test('public pages and large media expose bounded cache policies', async ({ request }) => {
-  const home = await request.get('/es/');
-  expect(home.headers()['cache-control']).toContain('max-age=300');
-
-  const articles = await request.get('/es/articulos/');
-  expect(articles.headers()['cache-control']).toContain('max-age=60');
+test('HTML is revalidated on every visit so deploys show up without cache-busting links', async ({ request }) => {
+  for (const path of ['/es/', '/es/articulos/']) {
+    const page = await request.get(path);
+    expect(page.headers()['cache-control']).toBe('no-cache');
+    const etag = page.headers()['etag'];
+    expect(etag).toBeTruthy();
+    const again = await request.get(path, { headers: { 'If-None-Match': etag } });
+    expect(again.status()).toBe(304);
+  }
 });
 
 test('an unpublished article slug returns 404', async ({ request }) => {

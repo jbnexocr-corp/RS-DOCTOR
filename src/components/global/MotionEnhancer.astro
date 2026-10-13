@@ -8,7 +8,6 @@
     }
 
     document.documentElement.dataset.motion = 'enhanced';
-    const mobile = window.matchMedia('(max-width: 67.99rem)').matches;
 
     const selectors = [
       'main h1',
@@ -25,13 +24,16 @@
       '.site-footer > *',
     ];
 
-    const elements = [...document.querySelectorAll(selectors.join(','))]
-      .filter((element) => !element.closest('[data-motion-ignore]'));
+    const selector = selectors.join(',');
+    // Solo se anima el elemento exterior: si un artículo y su párrafo se animaran
+    // a la vez, sus desplazamientos se sumarían y el texto quedaría descuadrado.
+    const elements = [...document.querySelectorAll(selector)]
+      .filter((element) => !element.closest('[data-motion-ignore]'))
+      .filter((element) => !element.parentElement?.closest(selector));
 
     elements.forEach((element, index) => {
       element.classList.add('motion-reveal');
       element.style.setProperty('--motion-order', String(index % 7));
-      if (mobile) element.classList.add(index % 2 === 0 ? 'motion-from-left' : 'motion-from-right');
       if (element.matches('figure, picture, img')) element.classList.add('motion-media');
       if (element.matches('h1, h2, h3')) element.classList.add('motion-heading');
     });
@@ -69,25 +71,30 @@
 
     let ticking = false;
     const revealNearViewport = () => {
+      if (!pendingElements.size) return;
       const viewport = window.innerHeight;
-      pendingElements.forEach((element) => {
+      // Primero se miden todos los elementos y después se modifican, para no
+      // forzar un recálculo de diseño por cada elemento.
+      const visible = [...pendingElements].filter((element) => {
         const rect = element.getBoundingClientRect();
-        if (rect.top <= viewport * 1.12 && rect.bottom >= viewport * -.12) {
-          reveal(element);
-          observer.unobserve(element);
-        }
+        return rect.top <= viewport * 1.12 && rect.bottom >= viewport * -.12;
+      });
+      visible.forEach((element) => {
+        reveal(element);
+        observer.unobserve(element);
       });
     };
     const updateParallax = () => {
       const viewport = window.innerHeight;
       const scrollable = document.documentElement.scrollHeight - viewport;
-      progress.style.setProperty('--reading-progress', String(scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 0));
-      activeParallax.forEach((image) => {
+      const offsets = [...activeParallax].map((image) => {
         const rect = image.getBoundingClientRect();
         const mediaProgress = (rect.top + rect.height / 2 - viewport / 2) / viewport;
-        image.style.setProperty('--parallax-y', `${Math.max(-14, Math.min(14, mediaProgress * -24))}px`);
+        return [image, Math.max(-14, Math.min(14, mediaProgress * -24))];
       });
       revealNearViewport();
+      progress.style.setProperty('--reading-progress', String(scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 0));
+      offsets.forEach(([image, offset]) => image.style.setProperty('--parallax-y', `${offset}px`));
       ticking = false;
     };
     window.addEventListener('scroll', () => {
@@ -103,6 +110,7 @@
       requestAnimationFrame(() => target.classList.add('motion-tap'));
       setTimeout(() => target.classList.remove('motion-tap'), 380);
     }, { passive: true });
+    window.addEventListener('beforeprint', () => pendingElements.forEach(reveal));
     updateParallax();
     window.setTimeout(revealNearViewport, 600);
   })();

@@ -25,13 +25,16 @@ function storage() {
   return storageClient;
 }
 
+export class InvalidImageError extends Error {}
+
 export async function uploadMedia(file: File) {
   const input = Buffer.from(await file.arrayBuffer());
   const optimized = await sharp(input, { limitInputPixels: 40_000_000 })
     .rotate()
     .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
     .webp({ quality: 82, effort: 4 })
-    .toBuffer();
+    .toBuffer()
+    .catch(() => { throw new InvalidImageError('El archivo no es una imagen válida.'); });
   const key = `media/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.webp`;
   await storage().send(new PutObjectCommand({
     Bucket: process.env.BUCKET!,

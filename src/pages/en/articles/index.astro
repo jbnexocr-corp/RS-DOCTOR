@@ -2,10 +2,12 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import InnerPage from '@/components/content/InnerPage.astro';
 import { innerPages } from '@/data/innerPages';
+import { loadArticleListForPage } from '@/lib/server/articles';
 export const prerender = false;
 const page = innerPages.en.find((item) => item.kind === 'articles')!;
 const pathname = '/en/articles/';
+const { articles, articlesUnavailable } = await loadArticleListForPage(Astro, 'en');
 ---
 <BaseLayout locale="en" title={`${page.title} | Dr. Ronald Salazar`} description={page.description} {pathname} alternatePathname="/es/articulos/" skipText="Skip to main content">
-  <InnerPage locale="en" {page} {pathname} />
+  <InnerPage locale="en" {page} {pathname} publishedArticles={articles} {articlesUnavailable} />
 </BaseLayout>

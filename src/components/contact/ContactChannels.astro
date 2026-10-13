@@ -1,6 +1,7 @@
 ---
 import type { Locale } from '@/lib/i18n';
 import { contactDetails } from '@/data/contact';
+import BrandIcon from '@/components/icons/BrandIcon.astro';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -39,7 +40,7 @@ const t = locale === 'es' ? {
       data-analytics-placement="contact_page"
       aria-label={`${t.whatsapp}: ${contactDetails.phone.display}`}
     >
-      <span aria-hidden="true">WA</span>{t.whatsapp}
+      <span class="contact-action-icon"><BrandIcon name="whatsapp" /></span>{t.whatsapp}
     </a>
     <a
       class="contact-phone-link"

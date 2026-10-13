@@ -1,10 +1,13 @@
 .git
 .astro
+.claude
 .qa
 dist
+docs
 node_modules
 playwright-report
 test-results
+*.docx
 .env
 .env.*
 !.env.example

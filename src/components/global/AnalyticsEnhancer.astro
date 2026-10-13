@@ -1,6 +1,8 @@
 <script>
   import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 
+  type Gtag = (command: 'event', name: string, parameters: Record<string, string>) => void;
+
   document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
@@ -12,5 +14,15 @@
       component: link.dataset.analyticsComponent ?? 'link',
       destination: link.dataset.analyticsDestination,
     });
+  });
+
+  // Reenvía a GA4 solo los parámetros permitidos (ubicación, componente y destino),
+  // nunca datos personales ni de salud. Sin GA4 configurado no se envía nada.
+  window.addEventListener('site:analytics', (event) => {
+    const gtag = (window as Window & { gtag?: Gtag }).gtag;
+    if (!gtag) return;
+    const { name, parameters } = (event as CustomEvent<{ name: AnalyticsEvent; parameters: Record<string, string | undefined> }>).detail;
+    const allowed = Object.fromEntries(Object.entries(parameters).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].length > 0));
+    gtag('event', name, allowed);
   });
 </script>

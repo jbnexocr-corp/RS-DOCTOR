@@ -28,6 +28,8 @@ const { locale, alternateHref } = Astro.props;
 
 <script>
   document.querySelectorAll<HTMLAnchorElement>('[data-language-choice]').forEach((link) => {
-    link.addEventListener('click', () => localStorage.setItem('site-language-preference', link.dataset.languageChoice || 'es'));
+    link.addEventListener('click', () => {
+      try { localStorage.setItem('site-language-preference', link.dataset.languageChoice || 'es'); } catch { /* almacenamiento bloqueado: el enlace funciona igual */ }
+    });
   });
 </script>
