@@ -236,7 +236,8 @@ h3 { color: var(--color-ink); font-size: clamp(1.15rem, 1.7vw, 1.4rem); font-wei
 .service-list a { color: inherit; text-decoration: none; }
 
 .doctor-section { background: var(--color-surface-warm); }
-.editorial-image { margin: 0; aspect-ratio: 4 / 5; overflow: hidden; }
+.editorial-image { position: relative; isolation: isolate; margin: 0 0 .75rem .75rem; aspect-ratio: 4 / 5; }
+.editorial-image picture { position: relative; z-index: 1; overflow: hidden; }
 .editorial-image picture, .editorial-image img { width: 100%; height: 100%; }
 .editorial-image img { object-fit: cover; object-position: center 30%; }
 .doctor-copy { padding-top: 3rem; }
@@ -258,9 +259,13 @@ h3 { color: var(--color-ink); font-size: clamp(1.15rem, 1.7vw, 1.4rem); font-wei
 .surgery-copy { width: min(calc(100% - 2rem), var(--content-wide)); margin-inline: auto; padding-bottom: 4rem; }
 .surgery-copy h2 { max-width: 12ch; margin-bottom: 1.7rem; }
 .surgery-copy > p:not(.eyebrow) { max-width: 39rem; color: var(--brand-light); }
-.surgery-image { position: relative; margin: 0; aspect-ratio: 4 / 5; }
+.surgery-image { position: relative; isolation: isolate; margin: 0; aspect-ratio: 4 / 5; }
+.surgery-image picture { overflow: hidden; }
 .surgery-image picture, .surgery-image img { width: 100%; max-height: 48rem; }
 .surgery-image img { object-fit: cover; object-position: center 25%; }
+/* Detalle de marca (bloques amarillos del brandbook) detrás de las fotografías. */
+.editorial-image::before, .inner-hero-image::before { content: ''; position: absolute; z-index: 0; bottom: -.75rem; left: -.75rem; width: 58%; height: 52%; background: var(--brand-yellow); }
+.surgery-image::before { content: ''; position: absolute; z-index: 2; top: 0; left: 0; width: 42%; height: .4rem; background: var(--brand-yellow); }
 .surgery-image figcaption { padding: .85rem 1rem 1.2rem; color: var(--brand-light); font-size: .8rem; }
 
 .resources { background: var(--color-surface); }
@@ -329,7 +334,8 @@ h3 { color: var(--color-ink); font-size: clamp(1.15rem, 1.7vw, 1.4rem); font-wei
 .inner-hero { padding-block: clamp(4.5rem, 9vw, 8rem); background: var(--color-surface-warm); }
 .inner-hero-copy h1 { max-width: 16ch; margin-bottom: 1.5rem; font-size: clamp(2.4rem, 5.6vw, 4.8rem); }
 .inner-hero-copy > p:not(.eyebrow) { max-width: 46rem; margin-bottom: 1.6rem; color: var(--color-text); font-weight: 300; font-family: var(--font-display); font-size: clamp(1.2rem, 2.2vw, 1.6rem); line-height: 1.55; }
-.inner-hero-image { margin: 2.5rem 1rem -4.5rem; aspect-ratio: 4 / 5; overflow: hidden; }
+.inner-hero-image { position: relative; isolation: isolate; margin: 2.5rem 1rem -4.5rem 1.75rem; aspect-ratio: 4 / 5; }
+.inner-hero-image picture { position: relative; z-index: 1; overflow: hidden; }
 .inner-hero-image picture, .inner-hero-image img { width: 100%; height: 100%; }
 .inner-hero-image img { object-fit: cover; object-position: center 24%; }
 .review-status { display: inline-flex; padding: .35rem .6rem; border: 1px solid var(--color-border); color: var(--color-stone); font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
@@ -490,6 +496,9 @@ h3 { color: var(--color-ink); font-size: clamp(1.15rem, 1.7vw, 1.4rem); font-wei
   .inner-hero-with-image { display: grid; grid-template-columns: 56% 44%; padding-block: 0; min-height: 43rem; }
   .inner-hero-with-image .inner-hero-copy { width: min(calc(100% - 4rem), 49rem); margin-left: max(2rem, calc((100vw - var(--content-wide)) / 2)); margin-right: 2rem; padding-block: 7rem; align-self: center; }
   .inner-hero-image { margin: 0; aspect-ratio: auto; min-height: 43rem; }
+  .inner-hero-image::before { bottom: 3rem; left: -1.5rem; width: 34%; height: 30%; }
+  .editorial-image { margin: 0 0 1.25rem 1.25rem; }
+  .editorial-image::before { bottom: -1.25rem; left: -1.25rem; }
   .form-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(3rem, 8vw, 8rem); align-items: start; }
 }
 

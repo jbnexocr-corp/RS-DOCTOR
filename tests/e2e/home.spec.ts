@@ -62,13 +62,13 @@ test('home hero scrubs video with scroll instead of autoplay', async ({ page }) 
   }, { timeout: 4_000 }).toBeGreaterThan(2);
 
   await hero.evaluate((element: HTMLElement) => {
-    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.3 : 1.7);
+    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.1 : 1.3);
     window.scrollTo({ top: element.offsetTop + (distance * 0.68), behavior: 'instant' });
   });
   await expect(hero.locator('[data-scroll-hero-copy-secondary]')).toBeVisible();
 
   await hero.evaluate((element: HTMLElement) => {
-    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.3 : 1.7);
+    const distance = window.innerHeight * (window.innerWidth < 768 ? 1.1 : 1.3);
     window.scrollTo({ top: element.offsetTop + (distance * 0.96), behavior: 'instant' });
   });
   const transition = hero.locator('.scroll-hero-transition');
