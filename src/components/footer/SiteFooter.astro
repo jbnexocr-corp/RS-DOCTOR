@@ -4,6 +4,7 @@ import type { Locale } from '@/lib/i18n';
 import { formatPlaceholder } from '@/lib/placeholders';
 import SocialLinks from '@/components/navigation/SocialLinks.astro';
 import { contactDetails } from '@/data/contact';
+import logoLightUrl from '@/assets/brand/logo-light.svg?url';
 interface Props { locale: Locale; content: HomeContent['footer']; nav: HomeContent['nav']; alternateHref?: string }
 const { locale, content, nav, alternateHref = locale === 'es' ? '/en/' : '/es/' } = Astro.props;
 const year = new Date().getFullYear();
@@ -20,8 +21,7 @@ const links = {
 <footer class="site-footer">
   <div class="footer-grid page-shell">
     <div class="footer-brand">
-      <p class="footer-name">Dr. Ronald Salazar</p>
-      <p>Ginecología Integral</p>
+      <img class="footer-logo" src={logoLightUrl} alt="Dr. Ronald Salazar, Ginecología Integral" width="386" height="99" loading="lazy" />
       <p class="footer-summary">{content.summary}</p>
       <address class="footer-contact">
         <a href={contactDetails.whatsapp.href} target="_blank" rel="noopener noreferrer" data-analytics-event="click_whatsapp" data-analytics-placement="footer">

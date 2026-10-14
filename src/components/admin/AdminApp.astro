@@ -1,5 +1,6 @@
 ---
 import { buildSeedRecords } from '@/lib/admin/seed';
+import logoLightUrl from '@/assets/brand/logo-light.svg?url';
 
 const databaseMode = Boolean(process.env.DATABASE_URL);
 const initialRecords = buildSeedRecords();
@@ -7,9 +8,7 @@ const initialRecords = buildSeedRecords();
 
 <div class="admin-shell" data-admin-app data-admin-mode={databaseMode ? 'database' : 'local'} data-seed={JSON.stringify(initialRecords)}>
   <aside class="admin-sidebar">
-    <a class="admin-brand" href="/es/" aria-label="Volver al sitio">
-      <span>RS</span><b>Estudio editorial</b>
-    </a>
+    <a class="admin-brand" href="/es/" aria-label="Volver al sitio"><img src={logoLightUrl} alt="Dr. Ronald Salazar" width="386" height="99" /><small>Estudio editorial</small></a>
     <nav aria-label="Administración">
       <button type="button" class="is-active" data-view="dashboard">Resumen</button>
       <button type="button" data-view="content">Contenido</button>

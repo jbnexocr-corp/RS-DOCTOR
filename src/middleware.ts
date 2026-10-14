@@ -21,6 +21,9 @@ async function withEtag(request: Request, response: Response) {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Las páginas prerenderizadas se generan en el build y se sirven como archivos
+  // estáticos con su propia ETag; aquí no hay solicitud real que revisar.
+  if (context.isPrerendered) return next();
   const pathname = context.url.pathname;
   const redirect = redirectRules.get(pathname);
   if (redirect) return context.redirect(redirect.newUrl, redirect.status);

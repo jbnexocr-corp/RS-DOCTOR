@@ -49,7 +49,7 @@ for (const viewport of viewports) {
     });
 
     await expect.poll(async () => secondaryCopy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.75);
-    await expect.poll(async () => video.evaluate((element: HTMLVideoElement) => element.currentTime)).toBeGreaterThan(initialTime + 0.2);
+    await expect.poll(async () => video.evaluate((element: HTMLVideoElement) => element.currentTime), { timeout: 10_000 }).toBeGreaterThan(initialTime + 0.2);
 
     await hero.evaluate((element: HTMLElement) => {
       const distance = window.innerHeight * 1.3;

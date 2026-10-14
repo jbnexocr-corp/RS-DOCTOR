@@ -62,7 +62,7 @@ html[data-motion='enhanced'] .button::after {
   transition: transform 650ms cubic-bezier(.2,.8,.2,1);
 }
 
-html[data-motion='enhanced'] .button:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(36,35,33,.15); }
+html[data-motion='enhanced'] .button:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
 html[data-motion='enhanced'] .button:hover::after { transform: translateX(125%); }
 
 html[data-motion='enhanced'] .service-list li,
@@ -75,13 +75,13 @@ html[data-motion='enhanced'] .service-list li:hover,
 html[data-motion='enhanced'] .related-list > a:hover,
 html[data-motion='enhanced'] .principle-list article:hover {
   padding-left: .75rem;
-  background: rgba(199,154,33,.045);
-  border-color: rgba(138,103,16,.45);
+  background: rgba(233,199,73,.1);
+  border-color: var(--brand-yellow);
 }
 
 html[data-motion='enhanced'] .site-header { animation: header-arrival 700ms cubic-bezier(.16,1,.3,1) both; }
 html[data-motion='enhanced'] .hero-image img { animation: hero-cinema 1.8s cubic-bezier(.16,1,.3,1) both; }
-.motion-scroll-progress { position: fixed; z-index: 90; top: 0; left: 0; width: 100%; height: 3px; pointer-events: none; transform: scaleX(var(--reading-progress, 0)); transform-origin: left; background: var(--brand-gold-pending-confirmation); box-shadow: 0 1px 8px rgba(199,154,33,.3); }
+.motion-scroll-progress { position: fixed; z-index: 90; top: 0; left: 0; width: 100%; height: 3px; pointer-events: none; transform: scaleX(var(--reading-progress, 0)); transform-origin: left; background: var(--brand-gold-pending-confirmation); box-shadow: 0 1px 8px rgba(233,199,73,.35); }
 
 @keyframes header-arrival { from { opacity: 0; transform: translateY(-1rem); } }
 @keyframes hero-cinema { from { opacity: 0; transform: scale(1.12); filter: saturate(.7); } }

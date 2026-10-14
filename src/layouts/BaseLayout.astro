@@ -2,6 +2,7 @@
 import type { Locale } from '@/lib/i18n';
 import SEO from '@/components/seo/SEO.astro';
 import StructuredData from '@/components/seo/StructuredData.astro';
+import '@fontsource-variable/encode-sans/wdth.css';
 import '@/styles/global.css';
 import '@/styles/motion.css';
 import MotionEnhancer from '@/components/global/MotionEnhancer.astro';
@@ -16,8 +17,10 @@ interface Props {
   skipText: string;
   noindex?: boolean;
   alternateIsTranslation?: boolean;
+  image?: string;
 }
-const props = Astro.props;
+// Imagen para compartir en redes por defecto: logo oficial y fotografía del doctor.
+const props = { image: '/og/dr-ronald-salazar.jpg', ...Astro.props };
 // GA4 solo se activa cuando la clínica entrega un ID aprobado (ver ANALYTICS.md).
 const ga4Id = (process.env.PUBLIC_GA4_ID || import.meta.env.PUBLIC_GA4_ID || '').trim();
 const analyticsId = /^G-[A-Z0-9]{4,20}$/.test(ga4Id) ? ga4Id : undefined;
@@ -28,10 +31,11 @@ const analyticsId = /^G-[A-Z0-9]{4,20}$/.test(ga4Id) ? ga4Id : undefined;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f0e8" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <SEO {...props} />
     <StructuredData locale={props.locale} pathname={props.pathname} />
     {analyticsId && (

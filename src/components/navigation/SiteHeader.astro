@@ -1,6 +1,6 @@
 ---
-import { Image } from 'astro:assets';
-import logo from '@/assets/images/logo-raster-pending-vector.jpeg';
+import logoUrl from '@/assets/brand/logo.svg?url';
+import logoFirmaUrl from '@/assets/brand/logo-firma.svg?url';
 import type { HomeContent } from '@/data/home';
 import type { Locale } from '@/lib/i18n';
 import LanguageSwitcher from './LanguageSwitcher.astro';
@@ -36,7 +36,11 @@ const servicePillars = locale === 'es' ? [
 <header class="site-header" data-site-header>
   <div class="header-inner page-shell">
     <a class="brand" href={`/${locale}/`} aria-label={`${content.home} — Dr. Ronald Salazar`}>
-      <Image src={logo} alt="Dr. Ronald Salazar, Ginecología Integral" width={300} quality={90} />
+      <!-- Brandbook: logo completo y, en pantallas pequeñas, la variante de solo firma. -->
+      <picture>
+        <source media="(max-width: 29.99rem)" srcset={logoFirmaUrl} />
+        <img src={logoUrl} alt="Dr. Ronald Salazar, Ginecología Integral" width="386" height="99" />
+      </picture>
     </a>
     <div class="header-actions">
       <LanguageSwitcher {locale} {alternateHref} />

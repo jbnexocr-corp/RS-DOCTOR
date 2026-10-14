@@ -9,7 +9,7 @@ Este archivo es la única lista operativa de datos no confirmados. Nada marcado 
 - Teléfono, WhatsApp, dirección, mapa, horarios y canal de urgencias aprobados.
 - Destinatario, conservación, eliminación y canal seguro para solicitudes del formulario.
 - Política de privacidad, términos, consentimiento de contacto y tratamiento de datos aprobados legalmente.
-- Logo vectorial editable; aprobación de versiones sin “Gestar”; HEX y Pantone oficiales.
+- Aprobación visual del logo aplicado en el sitio. El SVG se extrajo del brandbook actualizado (`src/assets/brand/`). En ese archivo “Gestar” sigue presente debajo de un rectángulo blanco, con un marco amarillo residual; conviene pedir al diseñador el vectorial limpio y con el descriptor reequilibrado, como pide el brief.
 - Confirmación de permisos de uso para todas las fotografías.
 - Biografía, títulos, instituciones, años, fecha de inicio, credenciales y número profesional si se publica.
 - Centros y hospitales autorizados para mención, diferenciando consulta y procedimientos.
@@ -27,7 +27,8 @@ Este archivo es la única lista operativa de datos no confirmados. Nada marcado 
 - Coordinación, cobro y condiciones de planes o paquetes, si existen.
 - Título editorial exacto del libro, autor, portada, edición, formatos, país y URL exacta de Amazon.
 - Nombre, instructor, temario, modalidad, duración, público, acceso, plataforma y URL exacta del curso prenatal.
-- Imagen Open Graph, favicon, `logo-dark.svg`, `logo-light.svg` y `logo-mark.svg` aprobados.
+- Aprobación de la imagen para redes (`public/og/dr-ronald-salazar.jpg`) y del favicon “RS” en colores de marca: el brandbook no define favicon.
+- Licencia web de Seravek (opcional): hoy el sitio usa Seravek en Apple y Encode Sans al 87,5 % en el resto.
 - Perfil de Empresa de Google y NAP consistente.
 - Texto de situaciones urgentes aprobado por la clínica.
 

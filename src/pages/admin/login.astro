@@ -1,5 +1,7 @@
 ---
+import '@fontsource-variable/encode-sans/wdth.css';
 import '@/styles/admin.css';
+import logoUrl from '@/assets/brand/logo.svg?url';
 import { ADMIN_SESSION_COOKIE, isAdminAuthConfigured, verifyAdminSession } from '@/lib/server/auth';
 
 if (verifyAdminSession(Astro.cookies.get(ADMIN_SESSION_COOKIE)?.value)) return Astro.redirect('/admin/');
@@ -18,12 +20,13 @@ const message = error === 'locked'
     <meta name="robots" content="noindex, nofollow, noarchive" />
     <meta name="color-scheme" content="light" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Acceso administrativo | Dr. Ronald Salazar</title>
   </head>
   <body class="admin-login-page">
     <main class="admin-login-shell">
       <section class="admin-login-card" aria-labelledby="login-title">
-        <a class="admin-login-brand" href="/es/" aria-label="Volver al sitio"><span>RS</span><b>Estudio editorial</b></a>
+        <a class="admin-login-brand" href="/es/" aria-label="Volver al sitio"><img src={logoUrl} alt="Dr. Ronald Salazar, Ginecología Integral" width="386" height="99" /></a>
         <p class="admin-kicker">Acceso privado</p>
         <h1 id="login-title">Panel de administración</h1>
         <p class="admin-login-intro">Ingresa con la cuenta administrativa autorizada.</p>
